@@ -5,6 +5,8 @@
   --font-sans: "Pretendard", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   --font-display: "Space Grotesk", "Pretendard", sans-serif;
+  --color-slate-400: #e2e8f0;
+  --color-slate-500: #cbd5e1;
 }
 html, body {
   word-break: keep-all;
