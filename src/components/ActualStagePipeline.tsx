@@ -131,7 +131,10 @@ export const ActualStagePipeline: React.FC<ActualStagePipelineProps> = ({
             />
             단계별 수급 진행 현황
           </h3>
-          <p className="text-xs sm:text-sm text-slate-400 font-medium mt-1.5 font-mono">
+          <p
+            className="text-slate-400 font-medium mt-1.5 font-mono"
+            style={{ fontSize: "13px", fontFamily: "system-ui" }}
+          >
             선택한 타임라인 주차(
             <strong className="text-blue-400 font-extrabold">
               {getWeekStr(currentWeek)}
