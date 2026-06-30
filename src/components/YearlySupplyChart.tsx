@@ -142,7 +142,7 @@ export const YearlySupplyChart: React.FC<YearlySupplyChartProps> = ({ individual
   };
 
   return (
-    <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden relative animate-in fade-in slide-in-from-bottom-4 h-full" style={{ animationDelay: '400ms' }}>
+    <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#3b4a6b] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden relative animate-in fade-in slide-in-from-bottom-4 h-full" style={{ animationDelay: '400ms' }}>
       <div className="absolute inset-0 z-0 opacity-[0.1] mix-blend-screen pointer-events-none" style={{ backgroundImage: "url('/yard.png')", backgroundSize: 'cover', backgroundPosition: 'center' }} />
       <div className="relative z-10">
         <div className="px-4 sm:px-5 py-2 sm:py-[5px] mt-0 h-auto sm:h-[52px] border-b border-[#232f43] flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#151c28]/60 gap-3 sm:gap-0">
@@ -162,7 +162,7 @@ export const YearlySupplyChart: React.FC<YearlySupplyChartProps> = ({ individual
           </div>
         </div>
         
-        <div className="px-3 md:px-[15px] py-[15px] h-auto border-t border-[#2a3750]">
+        <div className="px-3 md:px-[15px] py-[15px] h-auto border-t border-[#3b4a6b]">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-[13px] gap-4">
             <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
               <div className="flex-1 sm:flex-none">
@@ -182,8 +182,8 @@ export const YearlySupplyChart: React.FC<YearlySupplyChartProps> = ({ individual
             </div>
           </div>
 
-          <div className="h-[220px] sm:h-[265px] w-full mt-4 md:mt-2 min-h-[220px]">
-            <ResponsiveContainer width="100%" height="100%" minHeight={220}>
+          <div className="h-[175px] sm:h-[210px] w-full mt-4 md:mt-2 min-h-[175px]">
+            <ResponsiveContainer width="100%" height="100%" minHeight={175}>
               <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorTarget" x1="0" y1="0" x2="0" y2="1">
