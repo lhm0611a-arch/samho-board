@@ -1444,10 +1444,9 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-12 gap-4 sm:gap-6 mt-6">
-                {/* Department Allocation - Hidden as requested */}
-                {false && (
-                  <div
-                    className={`col-span-12 ${authRole !== "production" ? "lg:col-span-8 xl:col-span-8" : ""} bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col min-h-[500px] animate-in fade-in slide-in-from-bottom-4`}
+                {/* Department Allocation */}
+                <div
+                  className={`col-span-12 ${authRole !== "production" ? "lg:col-span-8 xl:col-span-8" : ""} bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col min-h-[500px] animate-in fade-in slide-in-from-bottom-4`}
                     style={{ animationDelay: "400ms" }}
                   >
                     <div className="px-4 sm:px-5 border-b border-[#232f43] flex flex-row items-center justify-between bg-[#151c28]/60 h-[61px] gap-2 sm:gap-0">
@@ -1611,12 +1610,11 @@ export default function App() {
                             ))}
                     </div>
                   </div>
-                )}
 
                 {/* Source Agency Monitoring */}
                 {authRole !== "production" && (
                   <div
-                    className="col-span-12 bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col overflow-hidden max-h-[700px] animate-in fade-in slide-in-from-bottom-4 relative"
+                    className="col-span-12 lg:col-span-4 xl:col-span-4 bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col overflow-hidden max-h-[700px] animate-in fade-in slide-in-from-bottom-4 relative"
                     style={{ animationDelay: "500ms" }}
                   >
                     <div className="absolute inset-0 z-0 opacity-[0.1] mix-blend-screen pointer-events-none" style={{ backgroundImage: "url('/yard.png')", backgroundSize: 'cover', backgroundPosition: 'center' }} />
