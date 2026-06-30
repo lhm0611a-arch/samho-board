@@ -137,7 +137,7 @@ export function SkillAnalysisChart({ individuals }: Props) {
   const COUNTRY_COLORS = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ec4899', '#14b8a6', '#ef4444', '#f97316'];
 
   return (
-    <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden relative animate-in fade-in slide-in-from-bottom-4 h-full" style={{ animationDelay: '500ms' }}>
+    <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#3b4a6b] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden relative animate-in fade-in slide-in-from-bottom-4 h-full" style={{ animationDelay: '500ms' }}>
       <div className="absolute inset-0 z-0 opacity-[0.1] mix-blend-screen pointer-events-none" style={{ backgroundImage: "url('/yard.png')", backgroundSize: 'cover', backgroundPosition: 'center' }} />
       <div className="relative z-10">
         <div className="px-4 sm:px-5 py-2 sm:py-[5px] mt-0 h-auto sm:h-[52px] border-b border-[#232f43] flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#151c28]/60 gap-3 sm:gap-0">
@@ -170,8 +170,8 @@ export function SkillAnalysisChart({ individuals }: Props) {
             </div>
           </div>
 
-          <div className="h-[220px] sm:h-[265px] w-full mt-4 md:mt-2 min-h-[220px]">
-            <ResponsiveContainer width="100%" height="100%" minHeight={220}>
+          <div className="h-[175px] sm:h-[210px] w-full mt-4 md:mt-2 min-h-[175px]">
+            <ResponsiveContainer width="100%" height="100%" minHeight={175}>
               <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#232f43" vertical={false} />
                 <XAxis dataKey="group" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} dy={10} />
