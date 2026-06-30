@@ -239,7 +239,7 @@ export default function App() {
 
     // Fallback logic for hardcoded superusers if Firebase lookup fails or doc doesn't exist
     if (
-      loginId === "master" &&
+      loginId === "admin" &&
       loginPassword.trim() === (import.meta.env.VITE_MASTER_PW || "123456789")
     ) {
       setAuthRole("admin");
@@ -965,7 +965,7 @@ export default function App() {
         {/* Dark overlay */}
         <div className="absolute inset-0 bg-[#0a0f18]/60 z-0"></div>
 
-        <div className="relative z-10 bg-[#0a0f18]/95 backdrop-blur-md shadow-2xl relative flex flex-col items-center" style={{ width: '550px', height: '600px', padding: '30px' }}>
+        <div className="relative z-10 bg-[#0a0f18]/60 backdrop-blur-md shadow-2xl relative flex flex-col items-center" style={{ width: '550px', height: '600px', padding: '30px' }}>
           {/* Corner accents */}
           <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-cyan-400"></div>
           <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-cyan-400"></div>
@@ -1014,7 +1014,7 @@ export default function App() {
                     setLoginError(false);
                   }}
                   className={`w-full px-4 py-[12px] pl-12 bg-[#050b14] border border-[#1a2332] focus:border-cyan-500/50 text-white placeholder-slate-500 rounded-lg outline-none transition-all font-mono`}
-                  placeholder="아이디 입력 (마스터: master)"
+                  placeholder="아이디 입력"
                   autoFocus
                 />
                 <Users
@@ -1403,7 +1403,7 @@ export default function App() {
               </div>
 
               {/* Stages Pipeline */}
-              <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden relative group transition-all duration-300">
+              <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#3b4a6b] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden relative group transition-all duration-300">
                 <div
                   className="absolute inset-0 z-0 opacity-20 transition-opacity group-hover:opacity-30 mix-blend-overlay pointer-events-none"
                   style={{
@@ -1446,7 +1446,7 @@ export default function App() {
               <div className="grid grid-cols-12 gap-4 sm:gap-6 mt-6">
                 {/* Department Allocation */}
                 <div
-                  className={`col-span-12 ${authRole !== "production" ? "lg:col-span-8 xl:col-span-8" : ""} bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col min-h-[500px] animate-in fade-in slide-in-from-bottom-4`}
+                  className={`col-span-12 ${authRole !== "production" ? "lg:col-span-8 xl:col-span-8" : ""} bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#3b4a6b] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col min-h-[500px] animate-in fade-in slide-in-from-bottom-4`}
                     style={{ animationDelay: "400ms" }}
                   >
                     <div className="px-4 sm:px-5 border-b border-[#232f43] flex flex-row items-center justify-between bg-[#151c28]/60 h-[61px] gap-2 sm:gap-0">
@@ -1614,7 +1614,7 @@ export default function App() {
                 {/* Source Agency Monitoring */}
                 {authRole !== "production" && (
                   <div
-                    className="col-span-12 lg:col-span-4 xl:col-span-4 bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col overflow-hidden max-h-[700px] animate-in fade-in slide-in-from-bottom-4 relative"
+                    className="col-span-12 lg:col-span-4 xl:col-span-4 bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#3b4a6b] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col overflow-hidden max-h-[700px] animate-in fade-in slide-in-from-bottom-4 relative"
                     style={{ animationDelay: "500ms" }}
                   >
                     <div className="absolute inset-0 z-0 opacity-[0.1] mix-blend-screen pointer-events-none" style={{ backgroundImage: "url('/yard.png')", backgroundSize: 'cover', backgroundPosition: 'center' }} />
