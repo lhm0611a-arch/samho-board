@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Award } from 'lucide-react';
 import { IndividualData } from '../types';
 
@@ -11,18 +11,21 @@ export function SkillAnalysisChart({ individuals }: Props) {
   const [chartView, setChartView] = useState<'type' | 'country'>('type');
 
   const { stats, statsByCountry, countriesList } = useMemo(() => {
-    let totalKr = 0, totalSkill = 0;
-    let countKr = 0, countSkill = 0;
+    // Only include individuals who have entered the country
+    const enteredIndividuals = individuals.filter(ind => typeof ind.entryPassWeek === 'number');
 
-    let e9Kr = 0, e9Skill = 0;
-    let e9CountKr = 0, e9CountSkill = 0;
+    let totalKr = 0, totalWeld = 0, totalChibu = 0;
+    let countKr = 0, countWeld = 0, countChibu = 0;
 
-    let genKr = 0, genSkill = 0;
-    let genCountKr = 0, genCountSkill = 0;
+    let e9Kr = 0, e9Weld = 0, e9Chibu = 0;
+    let e9CountKr = 0, e9CountWeld = 0, e9CountChibu = 0;
 
-    const cStats: Record<string, { krTotal: number, krCount: number, skillTotal: number, skillCount: number }> = {};
+    let genKr = 0, genWeld = 0, genChibu = 0;
+    let genCountKr = 0, genCountWeld = 0, genCountChibu = 0;
 
-    individuals.forEach(ind => {
+    const cStats: Record<string, { krTotal: number, krCount: number, weldTotal: number, weldCount: number, chibuTotal: number, chibuCount: number }> = {};
+
+    enteredIndividuals.forEach(ind => {
       // Use main score if available, else pre score
       let kr = parseInt(ind.mainKrScore as string, 10);
       if (isNaN(kr)) kr = parseInt(ind.preKrScore as string, 10);
@@ -33,57 +36,51 @@ export function SkillAnalysisChart({ individuals }: Props) {
       let weld = parseInt(ind.mainWeldScore as string, 10);
       if (isNaN(weld)) weld = parseInt(ind.preWeldScore as string, 10);
 
-      // Average skill score if both exist, else the one that exists.
-      let skill = NaN;
-      if (!isNaN(chibu) && !isNaN(weld)) {
-        skill = Math.max(chibu, weld); // takes highest between chibu and weld
-      } else if (!isNaN(chibu)) {
-        skill = chibu;
-      } else if (!isNaN(weld)) {
-        skill = weld;
-      }
-
       const isE9 = ind.isE9 === true;
+      const country = ind.country || '기타';
+      if (!cStats[country]) {
+        cStats[country] = { krTotal: 0, krCount: 0, weldTotal: 0, weldCount: 0, chibuTotal: 0, chibuCount: 0 };
+      }
 
       if (!isNaN(kr)) {
         totalKr += kr;
         countKr++;
         if (isE9) { e9Kr += kr; e9CountKr++; }
         else { genKr += kr; genCountKr++; }
-      }
-
-      if (!isNaN(skill)) {
-        totalSkill += skill;
-        countSkill++;
-        if (isE9) { e9Skill += skill; e9CountSkill++; }
-        else { genSkill += skill; genCountSkill++; }
-      }
-
-      const country = ind.country || '기타';
-      if (!cStats[country]) {
-        cStats[country] = { krTotal: 0, krCount: 0, skillTotal: 0, skillCount: 0 };
-      }
-      
-      if (!isNaN(kr)) {
         cStats[country].krTotal += kr;
         cStats[country].krCount++;
       }
-      if (!isNaN(skill)) {
-        cStats[country].skillTotal += skill;
-        cStats[country].skillCount++;
+
+      if (!isNaN(weld)) {
+        totalWeld += weld;
+        countWeld++;
+        if (isE9) { e9Weld += weld; e9CountWeld++; }
+        else { genWeld += weld; genCountWeld++; }
+        cStats[country].weldTotal += weld;
+        cStats[country].weldCount++;
+      }
+
+      if (!isNaN(chibu)) {
+        totalChibu += chibu;
+        countChibu++;
+        if (isE9) { e9Chibu += chibu; e9CountChibu++; }
+        else { genChibu += chibu; genCountChibu++; }
+        cStats[country].chibuTotal += chibu;
+        cStats[country].chibuCount++;
       }
     });
 
     const avg = (val: number, cnt: number) => cnt > 0 ? Math.round(val / cnt) : 0;
 
     const countryArr = Object.entries(cStats)
-      .filter(([_, data]) => data.krCount > 0 || data.skillCount > 0)
+      .filter(([_, data]) => data.krCount > 0 || data.weldCount > 0 || data.chibuCount > 0)
       .map(([country, data]) => ({
         country,
         kr: avg(data.krTotal, data.krCount),
-        skill: avg(data.skillTotal, data.skillCount),
+        weld: avg(data.weldTotal, data.weldCount),
+        chibu: avg(data.chibuTotal, data.chibuCount),
       }))
-      .sort((a, b) => b.skill - a.skill);
+      .sort((a, b) => (b.weld + b.chibu) - (a.weld + a.chibu));
 
     const statsByCountry = [
       {
@@ -91,16 +88,20 @@ export function SkillAnalysisChart({ individuals }: Props) {
         ...countryArr.reduce((acc, c) => ({ ...acc, [c.country]: c.kr }), {})
       },
       {
-        group: '직무 기량',
-        ...countryArr.reduce((acc, c) => ({ ...acc, [c.country]: c.skill }), {})
+        group: '용접 기량',
+        ...countryArr.reduce((acc, c) => ({ ...acc, [c.country]: c.weld }), {})
+      },
+      {
+        group: '취부 기량',
+        ...countryArr.reduce((acc, c) => ({ ...acc, [c.country]: c.chibu }), {})
       }
     ];
 
     return {
       stats: {
-        total: { kr: avg(totalKr, countKr), skill: avg(totalSkill, countSkill) },
-        e9: { kr: avg(e9Kr, e9CountKr), skill: avg(e9Skill, e9CountSkill) },
-        gen: { kr: avg(genKr, genCountKr), skill: avg(genSkill, genCountSkill) }
+        total: { kr: avg(totalKr, countKr), weld: avg(totalWeld, countWeld), chibu: avg(totalChibu, countChibu) },
+        e9: { kr: avg(e9Kr, e9CountKr), weld: avg(e9Weld, e9CountWeld), chibu: avg(e9Chibu, e9CountChibu) },
+        gen: { kr: avg(genKr, genCountKr), weld: avg(genWeld, genCountWeld), chibu: avg(genChibu, genCountChibu) }
       },
       statsByCountry,
       countriesList: countryArr.map(c => c.country)
@@ -115,10 +116,16 @@ export function SkillAnalysisChart({ individuals }: Props) {
       '일반 외국인': stats.gen.kr,
     },
     {
-      group: '직무 기량',
-      '전체 인원': stats.total.skill,
-      'E-9 출신': stats.e9.skill,
-      '일반 외국인': stats.gen.skill,
+      group: '용접 기량',
+      '전체 인원': stats.total.weld,
+      'E-9 출신': stats.e9.weld,
+      '일반 외국인': stats.gen.weld,
+    },
+    {
+      group: '취부 기량',
+      '전체 인원': stats.total.chibu,
+      'E-9 출신': stats.e9.chibu,
+      '일반 외국인': stats.gen.chibu,
     }
   ];
 
@@ -135,7 +142,7 @@ export function SkillAnalysisChart({ individuals }: Props) {
       <div className="relative z-10">
         <div className="px-4 sm:px-5 py-2 sm:py-[5px] mt-0 h-auto sm:h-[52px] border-b border-[#232f43] flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#151c28]/60 gap-3 sm:gap-0">
           <h3 className="font-bold text-white text-[13px] sm:text-[15px] tracking-wide flex items-center gap-1.5 sm:gap-2">
-            <Award size={16} className="text-purple-500 hidden sm:block" /> 기량 및 한국어 수준 분석
+            <Award size={16} className="text-purple-500 hidden sm:block" /> 입국자 기량 및 한국어 분석
           </h3>
           <div className="flex bg-[#0a0f18]/80 p-1 rounded-xl border border-[#232f43] overflow-x-auto hide-scrollbar w-full sm:w-auto">
             <button onClick={() => setChartView('type')} className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${chartView === 'type' ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : 'text-slate-400 hover:text-slate-200'}`}>종류별 분석</button>
@@ -147,19 +154,19 @@ export function SkillAnalysisChart({ individuals }: Props) {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-[13px] gap-4">
             <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
               <div className="flex-1 sm:flex-none">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">E-9 한국어 평균</span>
-                <span className="text-xl font-display font-black text-white block">{stats.e9.kr}<span className="text-xs text-slate-400 font-medium ml-1">점</span></span>
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">E-9 용접 평균</span>
+                <span className="text-xl font-display font-black text-white block">{stats.e9.weld}<span className="text-xs text-slate-400 font-medium ml-1">점</span></span>
               </div>
               <div className="w-[1px] h-8 bg-[#232f43] hidden sm:block"></div>
               <div className="flex-1 sm:flex-none">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">E-9 기량 평균</span>
-                <span className="text-xl font-display font-black text-white block">{stats.e9.skill}<span className="text-xs text-slate-400 font-medium ml-1">점</span></span>
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">E-9 취부 평균</span>
+                <span className="text-xl font-display font-black text-white block">{stats.e9.chibu}<span className="text-xs text-slate-400 font-medium ml-1">점</span></span>
               </div>
             </div>
             
             <div className="bg-[#151c28]/80 border border-[#232f43] rounded-xl px-4 py-2 flex flex-col items-end w-full sm:w-auto">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">전체 기량 평균</span>
-              <span className="text-xl font-display font-black text-white">{stats.total.skill}<span className="text-xs text-slate-400 font-medium ml-1">점</span></span>
+              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">전체 용접 평균</span>
+              <span className="text-xl font-display font-black text-white">{stats.total.weld}<span className="text-xs text-slate-400 font-medium ml-1">점</span></span>
             </div>
           </div>
 
