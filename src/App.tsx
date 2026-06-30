@@ -984,10 +984,10 @@ export default function App() {
           <div className="flex flex-col items-center mb-6 text-center">
             <img src="/ci.png" alt="HD현대삼호" className="h-10 object-contain mb-8" />
 
-            <h2 className="text-2xl font-bold text-white tracking-tight mb-3">
+            <h2 className="text-[34px] font-bold text-white tracking-tight mb-3">
               E-7 수급 관리 시스템
             </h2>
-            <p className="text-sm text-slate-400 font-medium mt-1">
+            <p className="text-base text-slate-300 font-medium mt-1">
               접속 권한 확인을 위해
               <br />
               비밀번호를 입력해주세요.
@@ -998,7 +998,7 @@ export default function App() {
             onSubmit={handleInitialLogin}
             className="w-full max-w-md mt-2"
             noValidate
-            style={{ height: '191px' }}
+            style={{ height: '186.5px' }}
           >
             <div className="mb-4">
               <div className="relative">
@@ -1388,7 +1388,10 @@ export default function App() {
                       );
                     })()}
                     <div className="flex items-baseline justify-between mt-3">
-                      <span className="text-2xl sm:text-3xl font-display font-black text-white tracking-tighter">
+                      <span
+                        className="font-display font-black text-white tracking-tighter"
+                        style={{ fontSize: "25px" }}
+                      >
                         {getWeekStr(currentWeek)}
                       </span>
                       <span className="text-sm text-amber-500 font-mono font-bold self-end tracking-wider">
@@ -1400,9 +1403,9 @@ export default function App() {
               </div>
 
               {/* Stages Pipeline */}
-              <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden relative">
+              <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden relative group transition-all duration-300">
                 <div
-                  className="absolute inset-0 z-0 opacity-[0.1] mix-blend-screen pointer-events-none"
+                  className="absolute inset-0 z-0 opacity-20 transition-opacity group-hover:opacity-30 mix-blend-overlay pointer-events-none"
                   style={{
                     backgroundImage: "url('/yard.png')",
                     backgroundSize: "cover",
@@ -1441,67 +1444,134 @@ export default function App() {
               </div>
 
               <div className="grid grid-cols-12 gap-4 sm:gap-6 mt-6">
-                {/* Department Allocation */}
-                <div
-                  className={`col-span-12 ${authRole !== "production" ? "lg:col-span-8 xl:col-span-8" : ""} bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col min-h-[500px] animate-in fade-in slide-in-from-bottom-4`}
-                  style={{ animationDelay: "400ms" }}
-                >
-                  <div className="px-4 sm:px-5 border-b border-[#232f43] flex flex-row items-center justify-between bg-[#151c28]/60 h-[61px] gap-2 sm:gap-0">
-                    <h3 className="font-bold text-white text-[13px] sm:text-[15px] tracking-wide flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
-                      <Building2
-                        size={16}
-                        className="text-blue-500 hidden sm:block"
-                      />{" "}
-                      부서 배치 현황
-                    </h3>
-                    <div className="flex bg-[#0a0f18]/80 p-1 rounded-xl border border-[#232f43] overflow-x-auto hide-scrollbar flex-shrink-0">
-                      <button
-                        onClick={() => setAllocationMode("predicted")}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${allocationMode === "predicted" ? "bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-[0_0_10px_rgba(37,99,235,0.2)]" : "text-slate-400 hover:text-slate-200"}`}
-                      >
-                        예측 (공급계획)
-                      </button>
-                      <button
-                        onClick={() => setAllocationMode("confirmed")}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${allocationMode === "confirmed" ? "bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-[0_0_10px_rgba(37,99,235,0.2)]" : "text-slate-400 hover:text-slate-200"}`}
-                      >
-                        확정 (실제명단)
-                      </button>
+                {/* Department Allocation - Hidden as requested */}
+                {false && (
+                  <div
+                    className={`col-span-12 ${authRole !== "production" ? "lg:col-span-8 xl:col-span-8" : ""} bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col min-h-[500px] animate-in fade-in slide-in-from-bottom-4`}
+                    style={{ animationDelay: "400ms" }}
+                  >
+                    <div className="px-4 sm:px-5 border-b border-[#232f43] flex flex-row items-center justify-between bg-[#151c28]/60 h-[61px] gap-2 sm:gap-0">
+                      <h3 className="font-bold text-white text-[13px] sm:text-[15px] tracking-wide flex items-center gap-1.5 sm:gap-2 whitespace-nowrap">
+                        <Building2
+                          size={16}
+                          className="text-blue-500 hidden sm:block"
+                        />{" "}
+                        부서 배치 현황
+                      </h3>
+                      <div className="flex bg-[#0a0f18]/80 p-1 rounded-xl border border-[#232f43] overflow-x-auto hide-scrollbar flex-shrink-0">
+                        <button
+                          onClick={() => setAllocationMode("predicted")}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${allocationMode === "predicted" ? "bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-[0_0_10px_rgba(37,99,235,0.2)]" : "text-slate-400 hover:text-slate-200"}`}
+                        >
+                          예측 (공급계획)
+                        </button>
+                        <button
+                          onClick={() => setAllocationMode("confirmed")}
+                          className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${allocationMode === "confirmed" ? "bg-blue-600/20 text-blue-400 border border-blue-500/30 shadow-[0_0_10px_rgba(37,99,235,0.2)]" : "text-slate-400 hover:text-slate-200"}`}
+                        >
+                          확정 (실제명단)
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto hide-scrollbar">
-                    {allocationMode === "predicted"
-                      ? deptSummary
-                          .filter(
-                            (dept) =>
-                              authRole !== "production" ||
-                              !authDept ||
-                              dept.name === authDept,
-                          )
-                          .map((dept, idx) => {
-                            const displayTotal =
-                              filterStatus === "completed"
-                                ? dept.totalArrived
-                                : filterStatus === "planned"
-                                  ? dept.totalPlanned
-                                  : filterStatus === "current_wave"
-                                    ? dept.totalCurrentWave
-                                    : dept.totalMatched;
-                            return (
+                    <div className="p-6 grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[600px] overflow-y-auto hide-scrollbar">
+                      {allocationMode === "predicted"
+                        ? deptSummary
+                            .filter(
+                              (dept) =>
+                                authRole !== "production" ||
+                                !authDept ||
+                                dept.name === authDept,
+                            )
+                            .map((dept, idx) => {
+                              const displayTotal =
+                                filterStatus === "completed"
+                                  ? dept.totalArrived
+                                  : filterStatus === "planned"
+                                    ? dept.totalPlanned
+                                    : filterStatus === "current_wave"
+                                      ? dept.totalCurrentWave
+                                      : dept.totalMatched;
+                              return (
+                                <div
+                                  key={idx}
+                                  onClick={() => setSelectedDept(dept.name)}
+                                  className="bg-[#151c28]/60 backdrop-blur-sm border border-[#232f43] rounded-xl p-4 cursor-pointer hover:border-blue-500/50 transition-all hover:bg-[#1a2332]/80 hover:-translate-y-1 animate-in zoom-in-95"
+                                  style={{
+                                    animationDelay: `${500 + idx * 50}ms`,
+                                  }}
+                                >
+                                  <div className="flex justify-between items-center mb-2">
+                                    <h4 className="text-sm font-extrabold text-white tracking-wide font-mono">
+                                      {dept.name}
+                                    </h4>
+                                    <span className="text-lg font-display font-black text-blue-400">
+                                      {displayTotal}
+                                      <span className="text-xs text-slate-500 font-mono font-medium ml-1">
+                                        / {dept.totalReq}
+                                      </span>
+                                    </span>
+                                  </div>
+                                  <div className="w-full bg-slate-800 rounded-full h-1.5 mb-3 overflow-hidden">
+                                    <div
+                                      className="bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] h-full rounded-full transition-all duration-1000 ease-out"
+                                      style={{
+                                        width: `${Math.min(100, (displayTotal / dept.totalReq) * 100)}%`,
+                                      }}
+                                    ></div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-1.5">
+                                    {Object.entries(dept.jobs).map(
+                                      ([job, stats]: any) => {
+                                        const jobDisplay =
+                                          filterStatus === "completed"
+                                            ? stats.arr
+                                            : filterStatus === "planned"
+                                              ? stats.plan
+                                              : filterStatus === "current_wave"
+                                                ? stats.wave
+                                                : stats.matched;
+                                        return (
+                                          <span
+                                            key={job}
+                                            className="text-[10px] font-extrabold bg-[#0a0f18] border border-[#232f43] text-slate-300 px-2 py-0.5 rounded-lg font-mono"
+                                          >
+                                            {job}{" "}
+                                            <span className="text-blue-400 ml-1">
+                                              {jobDisplay}/{stats.req}
+                                            </span>
+                                          </span>
+                                        );
+                                      },
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })
+                        : confirmedDeptSummary
+                            .filter(
+                              (dept) =>
+                                authRole !== "production" ||
+                                !authDept ||
+                                dept.name === authDept,
+                            )
+                            .map((dept, idx) => (
                               <div
                                 key={idx}
-                                onClick={() => setSelectedDept(dept.name)}
+                                onClick={() =>
+                                  setSelectedConfirmedDept({
+                                    dept: dept.name,
+                                    job: null,
+                                  })
+                                }
                                 className="bg-[#151c28]/60 backdrop-blur-sm border border-[#232f43] rounded-xl p-4 cursor-pointer hover:border-blue-500/50 transition-all hover:bg-[#1a2332]/80 hover:-translate-y-1 animate-in zoom-in-95"
-                                style={{
-                                  animationDelay: `${500 + idx * 50}ms`,
-                                }}
+                                style={{ animationDelay: `${500 + idx * 50}ms` }}
                               >
                                 <div className="flex justify-between items-center mb-2">
                                   <h4 className="text-sm font-extrabold text-white tracking-wide font-mono">
                                     {dept.name}
                                   </h4>
                                   <span className="text-lg font-display font-black text-blue-400">
-                                    {displayTotal}
+                                    {dept.totalArrived}
                                     <span className="text-xs text-slate-500 font-mono font-medium ml-1">
                                       / {dept.totalReq}
                                     </span>
@@ -1509,118 +1579,54 @@ export default function App() {
                                 </div>
                                 <div className="w-full bg-slate-800 rounded-full h-1.5 mb-3 overflow-hidden">
                                   <div
-                                    className="bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] h-full rounded-full transition-all duration-1000 ease-out"
+                                    className="bg-slate-400 h-full rounded-full transition-all duration-1000 ease-out"
                                     style={{
-                                      width: `${Math.min(100, (displayTotal / dept.totalReq) * 100)}%`,
+                                      width: `${Math.min(100, (dept.totalArrived / dept.totalReq) * 100)}%`,
                                     }}
                                   ></div>
                                 </div>
                                 <div className="flex flex-wrap gap-1.5">
                                   {Object.entries(dept.jobs).map(
-                                    ([job, stats]: any) => {
-                                      const jobDisplay =
-                                        filterStatus === "completed"
-                                          ? stats.arr
-                                          : filterStatus === "planned"
-                                            ? stats.plan
-                                            : filterStatus === "current_wave"
-                                              ? stats.wave
-                                              : stats.matched;
-                                      return (
-                                        <span
-                                          key={job}
-                                          className="text-[10px] font-extrabold bg-[#0a0f18] border border-[#232f43] text-slate-300 px-2 py-0.5 rounded-lg font-mono"
-                                        >
-                                          {job}{" "}
-                                          <span className="text-blue-400 ml-1">
-                                            {jobDisplay}/{stats.req}
-                                          </span>
+                                    ([job, stats]: any) => (
+                                      <button
+                                        key={job}
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setSelectedConfirmedDept({
+                                            dept: dept.name,
+                                            job: job,
+                                          });
+                                        }}
+                                        className="text-[10px] font-extrabold bg-[#0a0f18]/80 border border-[#232f43] text-slate-300 px-2 py-0.5 rounded-lg hover:bg-[#1a2332]/80 transition-all font-mono"
+                                      >
+                                        {job}{" "}
+                                        <span className="text-blue-400 ml-1">
+                                          {stats.arr}/{stats.req}
                                         </span>
-                                      );
-                                    },
+                                      </button>
+                                    ),
                                   )}
                                 </div>
                               </div>
-                            );
-                          })
-                      : confirmedDeptSummary
-                          .filter(
-                            (dept) =>
-                              authRole !== "production" ||
-                              !authDept ||
-                              dept.name === authDept,
-                          )
-                          .map((dept, idx) => (
-                            <div
-                              key={idx}
-                              onClick={() =>
-                                setSelectedConfirmedDept({
-                                  dept: dept.name,
-                                  job: null,
-                                })
-                              }
-                              className="bg-[#151c28]/60 backdrop-blur-sm border border-[#232f43] rounded-xl p-4 cursor-pointer hover:border-blue-500/50 transition-all hover:bg-[#1a2332]/80 hover:-translate-y-1 animate-in zoom-in-95"
-                              style={{ animationDelay: `${500 + idx * 50}ms` }}
-                            >
-                              <div className="flex justify-between items-center mb-2">
-                                <h4 className="text-sm font-extrabold text-white tracking-wide font-mono">
-                                  {dept.name}
-                                </h4>
-                                <span className="text-lg font-display font-black text-blue-400">
-                                  {dept.totalArrived}
-                                  <span className="text-xs text-slate-500 font-mono font-medium ml-1">
-                                    / {dept.totalReq}
-                                  </span>
-                                </span>
-                              </div>
-                              <div className="w-full bg-slate-800 rounded-full h-1.5 mb-3 overflow-hidden">
-                                <div
-                                  className="bg-slate-400 h-full rounded-full transition-all duration-1000 ease-out"
-                                  style={{
-                                    width: `${Math.min(100, (dept.totalArrived / dept.totalReq) * 100)}%`,
-                                  }}
-                                ></div>
-                              </div>
-                              <div className="flex flex-wrap gap-1.5">
-                                {Object.entries(dept.jobs).map(
-                                  ([job, stats]: any) => (
-                                    <button
-                                      key={job}
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setSelectedConfirmedDept({
-                                          dept: dept.name,
-                                          job: job,
-                                        });
-                                      }}
-                                      className="text-[10px] font-extrabold bg-[#0a0f18]/80 border border-[#232f43] text-slate-300 px-2 py-0.5 rounded-lg hover:bg-[#1a2332]/80 transition-all font-mono"
-                                    >
-                                      {job}{" "}
-                                      <span className="text-blue-400 ml-1">
-                                        {stats.arr}/{stats.req}
-                                      </span>
-                                    </button>
-                                  ),
-                                )}
-                              </div>
-                            </div>
-                          ))}
+                            ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {/* Source Agency Monitoring */}
                 {authRole !== "production" && (
                   <div
-                    className="col-span-12 lg:col-span-4 xl:col-span-4 bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col overflow-hidden max-h-[700px] animate-in fade-in slide-in-from-bottom-4"
+                    className="col-span-12 bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#2a3750] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col overflow-hidden max-h-[700px] animate-in fade-in slide-in-from-bottom-4 relative"
                     style={{ animationDelay: "500ms" }}
                   >
-                    <div className="p-5 border-b border-[#232f43] bg-[#151c28]/60 h-[64px] flex items-center">
+                    <div className="absolute inset-0 z-0 opacity-[0.1] mix-blend-screen pointer-events-none" style={{ backgroundImage: "url('/yard.png')", backgroundSize: 'cover', backgroundPosition: 'center' }} />
+                    <div className="relative z-10 p-5 border-b border-[#232f43] bg-[#151c28]/60 h-[64px] flex items-center">
                       <h3 className="font-bold text-white text-[15px] tracking-wide flex items-center gap-2">
                         <Globe size={18} className="text-blue-500" /> 공급 출처
                         관제
                       </h3>
                     </div>
-                    <div className="p-4 border-b border-[#232f43] flex flex-col gap-3">
+                    <div className="relative z-10 p-4 border-b border-[#232f43] flex flex-col gap-3">
                       <select
                         value={selectedJobFilter}
                         onChange={(e) => setSelectedJobFilter(e.target.value)}
