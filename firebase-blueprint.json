@@ -1,0 +1,46 @@
+{
+  "entities": {
+    "Cache": {
+      "title": "Cache",
+      "description": "Cache for app data",
+      "type": "object",
+      "properties": {
+        "data": {
+          "type": "string"
+        }
+      }
+    },
+    "User": {
+      "title": "User",
+      "description": "User login information",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "passwordHash": {
+          "type": "string"
+        },
+        "rawPassword": {
+          "type": "string"
+        },
+        "role": {
+          "type": "string"
+        },
+        "deptName": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "firestore": {
+    "cache/{cacheId}": {
+      "schema": "Cache",
+      "description": "Cache entries"
+    },
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User credentials"
+    }
+  }
+}

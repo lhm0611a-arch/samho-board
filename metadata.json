@@ -1,0 +1,6 @@
+{
+  "name": "직영 E-7 생산직 스마트 수급 플랫폼",
+  "description": "글로벌 인력 수급 관리 시스템",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
