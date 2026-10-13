@@ -187,51 +187,48 @@ export const ActualStagePipeline: React.FC<ActualStagePipelineProps> = ({
       <div className="absolute -right-10 -top-10 text-white/5 pointer-events-none">
         <Users size={250} />
       </div>
-      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-[3px] gap-4 relative z-10 border-b border-[#232f43] pb-[7px]">
+      <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-2 gap-4 relative z-10 border-b border-[#232f43] pb-3">
         <div>
           <h3 className="text-base sm:text-lg font-bold text-white flex items-center tracking-tight break-keep">
             <FileSpreadsheet
               size={20}
-              className="mr-2 text-blue-500 shrink-0"
+              className="mr-2 text-blue-400 shrink-0"
             />
             단계별 수급 진행 현황
           </h3>
-          <p
-            className="text-slate-400 font-medium mt-1.5 font-mono"
-            style={{ fontSize: "13px", fontFamily: "system-ui" }}
-          >
+          <p className="text-xs sm:text-sm text-slate-300 font-normal mt-1">
             선택한 타임라인 주차(
-            <strong className="text-blue-400 font-extrabold">
+            <strong className="text-blue-300 font-semibold">
               {getWeekStr(currentWeek)}
             </strong>
             )를 기준으로 누적된 각 단계별 인원 현황입니다.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <div className="text-xs sm:text-sm font-extrabold text-slate-300 bg-[#151c28] px-3 py-1.5 rounded-xl border border-[#232f43] flex items-center font-mono">
+          <div className="text-xs sm:text-sm font-semibold text-slate-200 bg-[#151c28] px-3 py-1.5 rounded-xl border border-[#232f43] flex items-center">
             <CheckSquare size={14} className="mr-1.5 text-purple-400" />
             사전기량:{" "}
-            <span className="text-white font-black ml-1">
+            <span className="text-white font-bold ml-1 tabular-nums">
               {totalPreTested}명
             </span>
-            <span className="text-[11px] text-slate-500 ml-1 font-normal">
+            <span className="text-xs text-slate-400 ml-1 font-normal tabular-nums">
               / 총 {totalAllPreTested}명
             </span>
           </div>
-          <div className="text-xs sm:text-sm font-extrabold text-slate-300 bg-[#151c28] px-3 py-1.5 rounded-xl border border-[#232f43] flex items-center font-mono">
+          <div className="text-xs sm:text-sm font-semibold text-slate-200 bg-[#151c28] px-3 py-1.5 rounded-xl border border-[#232f43] flex items-center">
             <Milestone size={14} className="mr-1.5 text-blue-400" />
             본기량:{" "}
-            <span className="text-white font-black ml-1">
+            <span className="text-white font-bold ml-1 tabular-nums">
               {totalMainTested}명
             </span>
-            <span className="text-[11px] text-slate-500 ml-1 font-normal">
+            <span className="text-xs text-slate-400 ml-1 font-normal tabular-nums">
               / 총 {totalAllMainTested}명
             </span>
           </div>
         </div>
       </div>
 
-      <div className="flex flex-row items-stretch justify-between w-full relative pt-[10px] pb-[10px] overflow-x-visible hide-scrollbar gap-1 sm:gap-2">
+      <div className="flex flex-row items-stretch justify-between w-full relative pt-2 pb-2 overflow-x-visible hide-scrollbar gap-1 sm:gap-2">
         <div className="hidden sm:block absolute top-[90px] lg:top-[128px] left-0 w-full h-[1px] bg-[#232f43] z-0"></div>
         {steps.map((step, idx) => {
           const isTest = ["사전기량검증완료", "본기량검증완료"].includes(
@@ -262,44 +259,44 @@ export const ActualStagePipeline: React.FC<ActualStagePipelineProps> = ({
             <div
               key={idx}
               onClick={() => onStageClick(step.key, mainViewType)}
-              className={`flex flex-col items-center justify-between relative z-10 flex-1 min-w-0 px-0.5 sm:px-1.5 transition-all duration-500 cursor-pointer group animate-in slide-in-from-bottom-4 fade-in pt-6 pb-1 min-h-[250px] h-auto`}
+              className={`flex flex-col items-center justify-between relative z-10 flex-1 min-w-0 px-0.5 sm:px-1.5 transition-all duration-300 cursor-pointer group animate-in slide-in-from-bottom-4 fade-in pt-6 pb-1 min-h-[250px] h-auto`}
               style={{ animationDelay: `${idx * 150}ms` }}
             >
               <div
-                className={`absolute top-0 text-[10px] sm:text-[12px] font-extrabold font-mono px-2.5 py-0.5 rounded-full bg-[#050b14]/90 backdrop-blur-sm border ${step.border} ${step.color} z-20 whitespace-nowrap sm:group-hover:scale-105 transition-transform shadow-lg`}
+                className={`absolute top-0 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#050b14]/90 backdrop-blur-sm border ${step.border} ${step.color} z-20 whitespace-nowrap sm:group-hover:scale-105 transition-transform shadow-md`}
               >
                 {step.tag}
               </div>
 
               <div className="flex flex-col items-center w-full">
                 <div
-                  className={`w-12 h-12 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center mb-2.5 sm:mb-3 mt-4 sm:mt-5 relative sm:group-hover:-translate-y-1.5 transition-transform duration-500 shrink-0`}
+                  className={`w-12 h-12 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full flex items-center justify-center mb-2.5 sm:mb-3 mt-4 sm:mt-5 relative sm:group-hover:-translate-y-1.5 transition-transform duration-300 shrink-0`}
                 >
                   <div
-                    className={`absolute inset-0 rounded-full border border-solid ${step.border} ${step.hoverBorder} transition-colors duration-500 z-10 bg-[#0a0f18]/80 backdrop-blur-sm`}
+                    className={`absolute inset-0 rounded-full border border-solid ${step.border} ${step.hoverBorder} transition-colors duration-300 z-10 bg-[#0a0f18]/80 backdrop-blur-sm`}
                   ></div>
                   <div
-                    className={`absolute inset-0 rounded-full ${step.glowBg} ${step.glowHover} blur-[8px] sm:blur-[16px] transition-all duration-500 animate-pulse z-0`}
+                    className={`absolute inset-0 rounded-full ${step.glowBg} ${step.glowHover} blur-[8px] sm:blur-[16px] transition-all duration-300 animate-pulse z-0`}
                   ></div>
 
                   <step.icon
                     size={32}
                     strokeWidth={1.5}
-                    className={`relative z-20 ${step.color} ${step.hoverColor} drop-shadow-[0_0_8px_currentColor] transition-colors duration-500 w-5 h-5 sm:w-8 sm:h-8 lg:w-10 lg:h-10`}
+                    className={`relative z-20 ${step.color} ${step.hoverColor} drop-shadow-[0_0_8px_currentColor] transition-colors duration-300 w-5 h-5 sm:w-8 sm:h-8 lg:w-10 lg:h-10`}
                   />
                 </div>
 
-                <span className="text-[10px] sm:text-[11px] lg:text-xs font-bold text-slate-300 text-center mb-1.5 px-0.5 leading-tight break-keep flex items-center justify-center tracking-tight font-mono">
+                <span className="text-xs sm:text-sm font-semibold text-slate-200 text-center mb-1.5 px-0.5 leading-snug break-keep flex items-center justify-center tracking-tight">
                   {step.key}
                 </span>
 
                 <div className="flex flex-col items-center">
                   <span
-                    className={`text-xl sm:text-2xl lg:text-3xl font-display font-black transition-colors tracking-tighter ${bigNumber > 0 ? "text-white" : "text-slate-600"}`}
+                    className={`text-2xl sm:text-3xl font-bold transition-colors tracking-tight tabular-nums ${bigNumber > 0 ? "text-white" : "text-slate-400"}`}
                   >
                     {bigNumber}명
                   </span>
-                  <span className="text-[10px] sm:text-[11px] text-[#2bb6ff] font-sans font-extrabold uppercase tracking-wider mt-0.5 whitespace-nowrap">
+                  <span className="text-xs text-sky-400 font-semibold tracking-wide mt-0.5 whitespace-nowrap">
                     {bigLabel}
                   </span>
                 </div>
@@ -313,9 +310,9 @@ export const ActualStagePipeline: React.FC<ActualStagePipelineProps> = ({
                         e.stopPropagation();
                         if (s.dropped > 0) onStageClick(step.key, "dropped");
                       }}
-                      className={`text-[11px] font-bold font-mono px-2 py-0.5 rounded-lg flex items-center transition-all duration-300 whitespace-nowrap ${s.dropped > 0 ? "bg-red-900/30 border border-red-500/50 text-red-400 hover:bg-red-900/50 cursor-pointer" : "bg-[#151c28] border border-[#232f43] text-slate-600"}`}
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-lg flex items-center transition-all duration-200 whitespace-nowrap ${s.dropped > 0 ? "bg-red-950/60 border border-red-500/50 text-red-300 hover:bg-red-900/50 cursor-pointer shadow-sm" : "bg-[#151c28] border border-[#232f43] text-slate-400"}`}
                     >
-                      <UserX size={11} className="mr-1 shrink-0" /> 탈락 {s.dropped}
+                      <UserX size={12} className="mr-1 shrink-0" /> 탈락 {s.dropped}
                     </div>
                     {s.passed > 0 && (
                       <div
@@ -323,9 +320,9 @@ export const ActualStagePipeline: React.FC<ActualStagePipelineProps> = ({
                           e.stopPropagation();
                           onStageClick(step.key, "passed");
                         }}
-                        className="text-[11px] font-bold font-mono px-2 py-0.5 rounded-lg bg-blue-900/30 text-blue-400 border border-blue-500/50 flex items-center cursor-pointer hover:bg-blue-900/50 whitespace-nowrap"
+                        className="text-xs font-semibold px-2 py-0.5 rounded-lg bg-blue-950/60 text-blue-300 border border-blue-500/50 flex items-center cursor-pointer hover:bg-blue-900/60 whitespace-nowrap shadow-sm"
                       >
-                        <CheckCircle2 size={11} className="mr-1 shrink-0" /> 누적합격{" "}
+                        <CheckCircle2 size={12} className="mr-1 shrink-0" /> 누적합격{" "}
                         {s.passed}
                       </div>
                     )}
@@ -338,14 +335,14 @@ export const ActualStagePipeline: React.FC<ActualStagePipelineProps> = ({
                         e.stopPropagation();
                         if (s.dropped > 0) onStageClick(step.key, "dropped");
                       }}
-                      className={`text-[11px] font-bold font-mono px-2 py-0.5 rounded-lg flex items-center transition-all duration-300 whitespace-nowrap ${s.dropped > 0 ? "bg-red-900/30 border border-red-500/50 text-red-400 hover:bg-red-900/50 cursor-pointer" : "bg-[#151c28] border border-[#232f43] text-slate-600"}`}
+                      className={`text-xs font-semibold px-2 py-0.5 rounded-lg flex items-center transition-all duration-200 whitespace-nowrap ${s.dropped > 0 ? "bg-red-950/60 border border-red-500/50 text-red-300 hover:bg-red-900/50 cursor-pointer shadow-sm" : "bg-[#151c28] border border-[#232f43] text-slate-400"}`}
                     >
-                      <UserX size={11} className="mr-1 shrink-0" /> 탈락 {s.dropped}
+                      <UserX size={12} className="mr-1 shrink-0" /> 탈락 {s.dropped}
                     </div>
                   </div>
                 )}
                 {!isTest && !isEntry && (
-                  <div className="text-[11px] font-medium text-slate-400 bg-[#151c28] px-2.5 py-0.5 rounded-lg border border-[#232f43] font-mono flex items-center relative z-30 whitespace-nowrap">
+                  <div className="text-xs font-medium text-slate-300 bg-[#151c28] px-2.5 py-0.5 rounded-lg border border-[#232f43] flex items-center relative z-30 whitespace-nowrap">
                     해당 단계 체류중
                   </div>
                 )}

@@ -233,106 +233,106 @@ export function SkillAnalysisChart({ individuals }: Props) {
     <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#3b4a6b] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden relative animate-in fade-in slide-in-from-bottom-4 h-full" style={{ animationDelay: '500ms' }}>
       <div className="absolute inset-0 z-0 opacity-[0.1] mix-blend-screen pointer-events-none" style={{ backgroundImage: "url('/yard.png')", backgroundSize: 'cover', backgroundPosition: 'center' }} />
       <div className="relative z-10">
-        <div className="px-4 sm:px-5 py-2 sm:py-[5px] mt-0 h-auto sm:h-[52px] border-b border-[#232f43] flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#151c28]/60 gap-3 sm:gap-0">
-          <h3 className="font-bold text-white text-[13px] sm:text-[15px] tracking-wide flex items-center gap-1.5 sm:gap-2">
-            <Award size={16} className="text-purple-500 hidden sm:block" /> 입국자 기량 및 한국어 분석
+        <div className="px-4 sm:px-5 py-2 sm:py-2.5 h-auto sm:h-[52px] border-b border-[#232f43] flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#151c28]/60 gap-3 sm:gap-0">
+          <h3 className="font-bold text-white text-sm sm:text-base tracking-wide flex items-center gap-2">
+            <Award size={16} className="text-purple-400 hidden sm:block" /> 입국자 기량 및 한국어 분석
           </h3>
-          <div className="flex bg-[#0a0f18]/80 p-1 rounded-xl border border-[#232f43] overflow-x-auto hide-scrollbar w-full sm:w-auto gap-0.5">
-            <button onClick={() => setChartView('type')} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${chartView === 'type' ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : 'text-slate-400 hover:text-slate-200'}`}>종류별 비교</button>
-            <button onClick={() => setChartView('korean_detail')} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${chartView === 'korean_detail' ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : 'text-slate-400 hover:text-slate-200'}`}>한국어 6대 영역</button>
-            <button onClick={() => setChartView('grade')} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${chartView === 'grade' ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : 'text-slate-400 hover:text-slate-200'}`}>등급 분포</button>
-            <button onClick={() => setChartView('country')} className={`px-2.5 py-1 rounded-lg text-xs font-bold transition-all whitespace-nowrap ${chartView === 'country' ? 'bg-purple-600/20 text-purple-400 border border-purple-500/30 shadow-[0_0_10px_rgba(168,85,247,0.2)]' : 'text-slate-400 hover:text-slate-200'}`}>국가별 비교</button>
+          <div className="flex bg-[#0a0f18]/80 p-1 rounded-xl border border-[#232f43] overflow-x-auto hide-scrollbar w-full sm:w-auto gap-1">
+            <button onClick={() => setChartView('type')} className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${chartView === 'type' ? 'bg-purple-950/70 text-purple-300 border border-purple-500/50 shadow-sm' : 'text-slate-300 hover:text-white'}`}>종류별 비교</button>
+            <button onClick={() => setChartView('korean_detail')} className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${chartView === 'korean_detail' ? 'bg-purple-950/70 text-purple-300 border border-purple-500/50 shadow-sm' : 'text-slate-300 hover:text-white'}`}>한국어 6대 영역</button>
+            <button onClick={() => setChartView('grade')} className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${chartView === 'grade' ? 'bg-purple-950/70 text-purple-300 border border-purple-500/50 shadow-sm' : 'text-slate-300 hover:text-white'}`}>등급 분포</button>
+            <button onClick={() => setChartView('country')} className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all whitespace-nowrap ${chartView === 'country' ? 'bg-purple-950/70 text-purple-300 border border-purple-500/50 shadow-sm' : 'text-slate-300 hover:text-white'}`}>국가별 비교</button>
           </div>
         </div>
         
-        <div className="px-3 md:px-[15px] py-[15px] h-auto">
+        <div className="px-4 sm:px-5 py-4 h-auto">
           {/* Dynamic Insight KPI Header */}
           {chartView === 'type' && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-[13px] gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3.5 gap-4">
               <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
                 <div className="flex-1 sm:flex-none">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">E-9 용접 평균</span>
-                  <span className="text-xl font-display font-black text-purple-400 block">
-                    {stats.e9.weld}<span className="text-xs text-slate-400 font-medium ml-1">점</span>
-                    <span className="text-[10px] text-purple-300/80 font-mono font-bold ml-1.5">
+                  <span className="text-xs text-slate-300 font-medium mb-1 block">E-9 용접 평균</span>
+                  <span className="text-xl font-bold text-purple-300 block tabular-nums">
+                    {stats.e9.weld}<span className="text-xs text-slate-400 font-normal ml-1">점</span>
+                    <span className="text-xs text-purple-300 font-semibold ml-1.5">
                       (+{(stats.e9.weld - stats.gen.weld > 0 ? stats.e9.weld - stats.gen.weld : 0)}점 우수)
                     </span>
                   </span>
                 </div>
                 <div className="w-[1px] h-8 bg-[#232f43] hidden sm:block"></div>
                 <div className="flex-1 sm:flex-none">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">E-9 한국어 평균</span>
-                  <span className="text-xl font-display font-black text-white block">
-                    {stats.e9.kr}<span className="text-xs text-slate-400 font-medium ml-1">점</span>
+                  <span className="text-xs text-slate-300 font-medium mb-1 block">E-9 한국어 평균</span>
+                  <span className="text-xl font-bold text-white block tabular-nums">
+                    {stats.e9.kr}<span className="text-xs text-slate-400 font-normal ml-1">점</span>
                   </span>
                 </div>
               </div>
               
-              <div className="bg-[#151c28]/80 border border-[#232f43] rounded-xl px-3.5 py-1.5 flex flex-col items-end w-full sm:w-auto">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">현장 소통 가능(C등급↑)</span>
-                <span className="text-lg font-display font-black text-emerald-400">
-                  {stats.communicationPassRate}%<span className="text-xs text-slate-400 font-medium ml-1">({stats.communicationPassCount}명)</span>
+              <div className="bg-[#151c28]/90 border border-[#232f43] rounded-xl px-3.5 py-1.5 flex flex-col items-end w-full sm:w-auto">
+                <span className="text-xs text-slate-300 font-medium mb-0.5">현장 소통 가능(C등급↑)</span>
+                <span className="text-lg font-bold text-emerald-300 tabular-nums">
+                  {stats.communicationPassRate}%<span className="text-xs text-slate-300 font-normal ml-1">({stats.communicationPassCount}명)</span>
                 </span>
               </div>
             </div>
           )}
 
           {chartView === 'korean_detail' && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-[13px] gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3.5 gap-4">
               <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
                 <div className="flex-1 sm:flex-none">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">최우수 항목</span>
-                  <span className="text-lg font-display font-black text-emerald-400 block">
-                    {krBestItem.name}<span className="text-xs text-slate-400 font-medium ml-1.5 font-mono">{krBestItem.rate}%</span>
+                  <span className="text-xs text-slate-300 font-medium mb-1 block">최우수 항목</span>
+                  <span className="text-lg font-bold text-emerald-300 block tabular-nums">
+                    {krBestItem.name}<span className="text-xs text-slate-300 font-normal ml-1.5">{krBestItem.rate}%</span>
                   </span>
                 </div>
                 <div className="w-[1px] h-8 bg-[#232f43] hidden sm:block"></div>
                 <div className="flex-1 sm:flex-none">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">집중 보완 항목</span>
-                  <span className="text-lg font-display font-black text-amber-400 block">
-                    {krWeakItem.name}<span className="text-xs text-slate-400 font-medium ml-1.5 font-mono">{krWeakItem.rate}%</span>
+                  <span className="text-xs text-slate-300 font-medium mb-1 block">집중 보완 항목</span>
+                  <span className="text-lg font-bold text-amber-300 block tabular-nums">
+                    {krWeakItem.name}<span className="text-xs text-slate-300 font-normal ml-1.5">{krWeakItem.rate}%</span>
                   </span>
                 </div>
               </div>
               
-              <div className="bg-[#151c28]/80 border border-[#232f43] rounded-xl px-3.5 py-1.5 flex flex-col items-end w-full sm:w-auto">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">구술 평가 평균</span>
-                <span className="text-lg font-display font-black text-purple-400">
-                  {stats.total.kr}<span className="text-xs text-slate-400 font-medium ml-1">/ 100점</span>
+              <div className="bg-[#151c28]/90 border border-[#232f43] rounded-xl px-3.5 py-1.5 flex flex-col items-end w-full sm:w-auto">
+                <span className="text-xs text-slate-300 font-medium mb-0.5">구술 평가 평균</span>
+                <span className="text-lg font-bold text-purple-300 tabular-nums">
+                  {stats.total.kr}<span className="text-xs text-slate-400 font-normal ml-1">/ 100점</span>
                 </span>
               </div>
             </div>
           )}
 
           {chartView === 'grade' && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-[13px] gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3.5 gap-4">
               <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
                 <div className="flex-1 sm:flex-none">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">우수 회화 (A·B)</span>
-                  <span className="text-lg font-display font-black text-emerald-400 block">
+                  <span className="text-xs text-slate-300 font-medium mb-1 block">우수 회화 (A·B)</span>
+                  <span className="text-lg font-bold text-emerald-300 block tabular-nums">
                     {stats.grades.A + stats.grades.B}명
-                    <span className="text-xs text-slate-400 font-medium ml-1 font-mono">
+                    <span className="text-xs text-slate-300 font-normal ml-1">
                       ({stats.totalKrCount > 0 ? Math.round(((stats.grades.A + stats.grades.B) / stats.totalKrCount) * 100) : 0}%)
                     </span>
                   </span>
                 </div>
                 <div className="w-[1px] h-8 bg-[#232f43] hidden sm:block"></div>
                 <div className="flex-1 sm:flex-none">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">기초 소통 (C)</span>
-                  <span className="text-lg font-display font-black text-cyan-400 block">
+                  <span className="text-xs text-slate-300 font-medium mb-1 block">기초 소통 (C)</span>
+                  <span className="text-lg font-bold text-cyan-300 block tabular-nums">
                     {stats.grades.C}명
-                    <span className="text-xs text-slate-400 font-medium ml-1 font-mono">
+                    <span className="text-xs text-slate-300 font-normal ml-1">
                       ({stats.totalKrCount > 0 ? Math.round((stats.grades.C / stats.totalKrCount) * 100) : 0}%)
                     </span>
                   </span>
                 </div>
               </div>
               
-              <div className="bg-[#151c28]/80 border border-[#232f43] rounded-xl px-3.5 py-1.5 flex flex-col items-end w-full sm:w-auto">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">보충 교육 필요 (D·E)</span>
-                <span className="text-lg font-display font-black text-amber-400">
+              <div className="bg-[#151c28]/90 border border-[#232f43] rounded-xl px-3.5 py-1.5 flex flex-col items-end w-full sm:w-auto">
+                <span className="text-xs text-slate-300 font-medium mb-0.5">보충 교육 필요 (D·E)</span>
+                <span className="text-lg font-bold text-amber-300 tabular-nums">
                   {stats.grades.D + stats.grades.E}명
-                  <span className="text-xs text-slate-400 font-medium ml-1 font-mono">
+                  <span className="text-xs text-slate-300 font-normal ml-1">
                     ({stats.totalKrCount > 0 ? Math.round(((stats.grades.D + stats.grades.E) / stats.totalKrCount) * 100) : 0}%)
                   </span>
                 </span>
@@ -341,27 +341,27 @@ export function SkillAnalysisChart({ individuals }: Props) {
           )}
 
           {chartView === 'country' && (
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-[13px] gap-3 sm:gap-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3.5 gap-4">
               <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
                 <div className="flex-1 sm:flex-none">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">최고 용접 기량 국가</span>
-                  <span className="text-lg font-display font-black text-blue-400 block">
-                    {topWeldCountry.country}<span className="text-xs text-slate-400 font-medium ml-1.5 font-mono">{topWeldCountry.weld}점</span>
+                  <span className="text-xs text-slate-300 font-medium mb-1 block">최고 용접 기량 국가</span>
+                  <span className="text-lg font-bold text-blue-300 block tabular-nums">
+                    {topWeldCountry.country}<span className="text-xs text-slate-300 font-normal ml-1.5">{topWeldCountry.weld}점</span>
                   </span>
                 </div>
                 <div className="w-[1px] h-8 bg-[#232f43] hidden sm:block"></div>
                 <div className="flex-1 sm:flex-none">
-                  <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">최고 한국어 국가</span>
-                  <span className="text-lg font-display font-black text-purple-400 block">
-                    {topKrCountry.country}<span className="text-xs text-slate-400 font-medium ml-1.5 font-mono">{topKrCountry.kr}점</span>
+                  <span className="text-xs text-slate-300 font-medium mb-1 block">최고 한국어 국가</span>
+                  <span className="text-lg font-bold text-purple-300 block tabular-nums">
+                    {topKrCountry.country}<span className="text-xs text-slate-300 font-normal ml-1.5">{topKrCountry.kr}점</span>
                   </span>
                 </div>
               </div>
               
-              <div className="bg-[#151c28]/80 border border-[#232f43] rounded-xl px-3.5 py-1.5 flex flex-col items-end w-full sm:w-auto">
-                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">입국 대상 국적 수</span>
-                <span className="text-lg font-display font-black text-emerald-400">
-                  {countriesList.length}<span className="text-xs text-slate-400 font-medium ml-1">개국</span>
+              <div className="bg-[#151c28]/90 border border-[#232f43] rounded-xl px-3.5 py-1.5 flex flex-col items-end w-full sm:w-auto">
+                <span className="text-xs text-slate-300 font-medium mb-0.5">입국 대상 국적 수</span>
+                <span className="text-lg font-bold text-emerald-300 tabular-nums">
+                  {countriesList.length}<span className="text-xs text-slate-400 font-normal ml-1">개국</span>
                 </span>
               </div>
             </div>
@@ -373,8 +373,8 @@ export function SkillAnalysisChart({ individuals }: Props) {
               {chartView === 'type' ? (
                 <BarChart data={typeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#232f43" vertical={false} />
-                  <XAxis dataKey="group" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} dy={10} />
-                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} dx={-10} domain={[0, 100]} />
+                  <XAxis dataKey="group" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} dx={-10} domain={[0, 100]} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px', color: '#f8fafc', fontSize: '12px', padding: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
                     itemStyle={{ color: '#e2e8f0', fontSize: '12px', padding: '2px 0' }}
@@ -389,8 +389,8 @@ export function SkillAnalysisChart({ individuals }: Props) {
               ) : chartView === 'korean_detail' ? (
                 <BarChart data={koreanDetailData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#232f43" vertical={false} />
-                  <XAxis dataKey="group" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} dx={-10} domain={[0, 100]} unit="%" />
+                  <XAxis dataKey="group" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} dx={-10} domain={[0, 100]} unit="%" />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px', color: '#f8fafc', fontSize: '12px', padding: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
                     itemStyle={{ color: '#e2e8f0', fontSize: '12px', padding: '2px 0' }}
@@ -404,8 +404,8 @@ export function SkillAnalysisChart({ individuals }: Props) {
               ) : chartView === 'grade' ? (
                 <BarChart data={gradeData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#232f43" vertical={false} />
-                  <XAxis dataKey="group" stroke="#64748b" fontSize={11} tickLine={false} axisLine={false} dy={10} />
-                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} dx={-10} />
+                  <XAxis dataKey="group" stroke="#94a3b8" fontSize={11} tickLine={false} axisLine={false} dy={10} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} dx={-10} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px', color: '#f8fafc', fontSize: '12px', padding: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
                     itemStyle={{ color: '#e2e8f0', fontSize: '12px', padding: '2px 0' }}
@@ -423,8 +423,8 @@ export function SkillAnalysisChart({ individuals }: Props) {
               ) : (
                 <BarChart data={statsByCountry} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#232f43" vertical={false} />
-                  <XAxis dataKey="group" stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} dy={10} />
-                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} axisLine={false} dx={-10} domain={[0, 100]} />
+                  <XAxis dataKey="group" stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} dy={10} />
+                  <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} dx={-10} domain={[0, 100]} />
                   <Tooltip
                     contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '8px', color: '#f8fafc', fontSize: '12px', padding: '12px', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)' }}
                     itemStyle={{ color: '#e2e8f0', fontSize: '12px', padding: '2px 0' }}

@@ -155,6 +155,139 @@ export const normalizeName = (name: string | undefined | null): string => {
   return String(name).toLowerCase().replace(/\s+/g, '');
 };
 
+/**
+ * 이름을 단어(토큰) 단위로 분리하고 특수문자 제거
+ * 예: "YANUARY MUHAMMAD" -> ["yanuary", "muhammad"]
+ */
+export const cleanAndTokenizeName = (name: string | undefined | null): string[] => {
+  if (!name) return [];
+  const cleaned = String(name)
+    .toLowerCase()
+    .replace(/[^a-z0-9가-힣\s]/g, ' ')
+    .trim();
+  if (!cleaned) return [];
+  return cleaned.split(/\s+/).filter(Boolean);
+};
+
+/**
+ * 이름 동일 여부 판단:
+ * 1. 공백 제거 후 완전 일치 (예: "김진우" == "김 진우")
+ * 2. 띄어쓰기 기준 이름/중간이름/성의 순서가 바뀌어도 단어별 스펠링이 일치하면 동일인
+ *    (예: "YANUARY MUHAMMAD" == "MUHAMMAD YANUARY", "AHMAD TAUFIQ HIDAYAT" == "HIDAYAT AHMAD TAUFIQ")
+ */
+export const isSameName = (nameA?: string, nameB?: string): boolean => {
+  if (!nameA || !nameB) return false;
+  const normA = normalizeName(nameA);
+  const normB = normalizeName(nameB);
+  if (normA && normB && normA === normB) return true;
+
+  const tokensA = cleanAndTokenizeName(nameA);
+  const tokensB = cleanAndTokenizeName(nameB);
+  if (tokensA.length === 0 || tokensB.length === 0) return false;
+  if (tokensA.length !== tokensB.length) return false;
+
+  const sortedA = [...tokensA].sort().join(' ');
+  const sortedB = [...tokensB].sort().join(' ');
+  return sortedA === sortedB;
+};
+
+export const normalizeBirthMonth = (dob: string | undefined | null): string => {
+  if (!dob) return '';
+  const str = String(dob).trim();
+  const parts = str.split(/[-./\s]/).map((p) => p.trim()).filter(Boolean);
+  if (parts.length >= 2) {
+    let y = parts[0];
+    let m = parts[1];
+    // DD/MM/YYYY 형태 처리 (마지막 요소가 4자리 연도인 경우)
+    if (parts.length >= 3 && parts[parts.length - 1].length === 4) {
+      y = parts[parts.length - 1];
+      m = parts[1];
+    } else if (y.length === 2) {
+      y = `19${y}`;
+    }
+    return `${y}${m.padStart(2, '0')}`;
+  }
+  const digits = str.replace(/[^0-9]/g, '');
+  if (digits.length >= 6) {
+    return digits.slice(0, 6);
+  }
+  return digits;
+};
+
+export const normalizeDOB = (dob: string | undefined | null): string => {
+  if (!dob) return '';
+  const str = String(dob).trim();
+  const parts = str.split(/[-./\s]/).map((p) => p.trim()).filter(Boolean);
+  if (parts.length >= 3) {
+    let y = parts[0];
+    let m = parts[1];
+    let d = parts[2];
+    // DD/MM/YYYY 형태 처리 (마지막 요소가 4자리 연도인 경우)
+    if (parts[2].length === 4) {
+      y = parts[2];
+      m = parts[1];
+      d = parts[0];
+    } else if (y.length === 2) {
+      y = `19${y}`;
+    }
+    return `${y}${m.padStart(2, '0')}${d.padStart(2, '0')}`;
+  }
+  const digits = str.replace(/[^0-9]/g, '');
+  if (digits.length === 8) {
+    return digits;
+  }
+  if (digits.length === 6) {
+    return `19${digits}`;
+  }
+  return digits;
+};
+
+export const isSameDOB = (dobA?: string, dobB?: string): boolean => {
+  if (!dobA && !dobB) return true;
+  if (!dobA || !dobB) return true;
+  const dA = normalizeDOB(dobA);
+  const dB = normalizeDOB(dobB);
+  if (dA && dB) {
+    if (dA === dB) return true;
+    const ymA = normalizeBirthMonth(dobA);
+    const ymB = normalizeBirthMonth(dobB);
+    if (ymA && ymB) {
+      return ymA === ymB;
+    }
+    return false;
+  }
+  return true;
+};
+
+/**
+ * 단계별 수급 진행 현황 동일인 판별:
+ * - 응시번호는 무시
+ * - 띄어쓰기 기준 성/이름/중간이름 위치가 바뀌어 있어도 동일 스펠링이면 동일인
+ * - 생년월일(DOB) 일치 확인
+ */
+export const isSameIndividual = (
+  ind1: { uid?: string; name?: string; dob?: string },
+  ind2: { uid?: string; name?: string; dob?: string }
+): boolean => {
+  if (!ind1 || !ind2) return false;
+  if (!isSameName(ind1.name, ind2.name)) return false;
+
+  const dobA = normalizeDOB(ind1.dob);
+  const dobB = normalizeDOB(ind2.dob);
+  if (dobA && dobB) {
+    if (dobA === dobB) return true;
+    const ymA = normalizeBirthMonth(ind1.dob);
+    const ymB = normalizeBirthMonth(ind2.dob);
+    if (ymA && ymB) {
+      return ymA === ymB;
+    }
+    return false;
+  }
+
+  return true;
+};
+
+
 export const createHeaderMap = (headerRows: string[][]): Record<string, number> => {
   const map: Record<string, number> = {};
   if (!headerRows || headerRows.length === 0) return map;
@@ -180,14 +313,26 @@ const cleanStr = (s: any): string => String(s || '').trim();
 export const parsePreRow = (cols: string[], rowIndex: number, map?: Record<string, number>): IndividualData | null => {
   if (!cols || cols.length < 5) return null;
   
-  const uid = cleanStr(cols[1]);
-  const name = cleanStr(cols[3]);
+  const getCol = (names: string[], defIdx: number): string => {
+    if (map) {
+      for (const n of names) {
+        const cleanN = n.replace(/\s+/g, '').replace(/"/g, '');
+        if (map[cleanN] !== undefined && cols[map[cleanN]] !== undefined) {
+          return cleanStr(cols[map[cleanN]]);
+        }
+      }
+    }
+    return cleanStr(cols[defIdx]);
+  };
+
+  const uid = getCol(['응시번호', 'UID', 'NO'], 1);
+  const name = getCol(['성명', '성 명', '이름'], 3);
   if (!uid || uid === '응시번호' || uid === 'NO' || name === '성명' || name === '성 명') return null;
 
-  const job = cleanStr(cols[2]) || '미지정';
-  const dob = cleanStr(cols[4]);
-  const isE9 = /[oO○0]/.test(cleanStr(cols[5]));
-  const age = cleanStr(cols[6]);
+  const job = getCol(['직종', '직무'], 2) || '미지정';
+  const dob = getCol(['생년월일', 'DOB'], 4);
+  const isE9 = /[oO○0]/.test(getCol(['E9여부', 'E9', 'E-9'], 5));
+  const age = getCol(['나이', '연령'], 6);
 
   // Speaking evaluation details
   const krComprehension = cleanStr(cols[7]);
@@ -207,16 +352,16 @@ export const parsePreRow = (cols: string[], rowIndex: number, map?: Record<strin
   const weldScore = cleanStr(cols[19]);
   const weldGrade = cleanStr(cols[20]);
 
-  const resultStr = cleanStr(cols[21]);
-  const country = cleanStr(cols[22]) || '미지정';
-  const agency = cleanStr(cols[23]) || '미지정';
+  const resultStr = getCol(['기량검증결과', '기량검증 결과', '검증결과'], 21);
+  const country = getCol(['국적', '국가'], 22) || '미지정';
+  const agency = getCol(['송출업체', '업체', '송출사'], 23) || '미지정';
 
-  const testWeek = parseWeekInfo(cols[24]);
-  const passWeek = parseWeekInfo(cols[25]);
-  const dropWeek = parseWeekInfo(cols[26]);
+  const testWeek = parseWeekInfo(getCol(['응시일시', '응시일자', '시험일자', '사전기량응시일시', '사전기량응시일자'], 24));
+  const passWeek = parseWeekInfo(getCol(['합격일자', '사전기량합격일자'], 25));
+  const dropWeek = parseWeekInfo(getCol(['사전기량탈락일자', '탈락일자', '사전기량불합격일자', '불합격일자'], 26));
 
-  // Determine Pass / Drop status accurately
-  // Rule: 기량검증 결과 텍스트보다 합격일자 / 탈락일자가 최우선
+  // Determine Pass / Drop status accurately:
+  // '기량검증 결과' 텍스트로 판단하지 않고 오직 '합격일자', '사전기량 탈락일자' 일자 컬럼으로만 판단!
   let finalPassWeek: number | '탈락' | null = null;
   let finalDropWeek: number | '탈락' | null = null;
 
@@ -224,13 +369,9 @@ export const parsePreRow = (cols: string[], rowIndex: number, map?: Record<strin
     finalPassWeek = passWeek;
   } else if (dropWeek !== null) {
     finalDropWeek = dropWeek;
-  } else if (resultStr.includes('합격') || resultStr.includes('최종')) {
-    finalPassWeek = testWeek;
-  } else if (resultStr.includes('불합격') || resultStr.includes('탈락')) {
-    finalDropWeek = testWeek;
   }
 
-  const track = cleanStr(cols[27]) || '민간업체';
+  const track = getCol(['트랙', '구분'], 27) || '민간업체';
   const notes = cols.slice(28).map(cleanStr).filter(Boolean).join(' | ');
 
   const krDetail: KrSpeakingDetail = {
@@ -274,14 +415,26 @@ export const parsePreRow = (cols: string[], rowIndex: number, map?: Record<strin
 export const parseMainRow = (cols: string[], rowIndex: number, map?: Record<string, number>): IndividualData | null => {
   if (!cols || cols.length < 5) return null;
   
-  const uid = cleanStr(cols[1]);
-  const name = cleanStr(cols[3]);
+  const getCol = (names: string[], defIdx: number): string => {
+    if (map) {
+      for (const n of names) {
+        const cleanN = n.replace(/\s+/g, '').replace(/"/g, '');
+        if (map[cleanN] !== undefined && cols[map[cleanN]] !== undefined) {
+          return cleanStr(cols[map[cleanN]]);
+        }
+      }
+    }
+    return cleanStr(cols[defIdx]);
+  };
+
+  const uid = getCol(['응시번호', 'UID', 'NO'], 1);
+  const name = getCol(['성명', '성 명', '이름'], 3);
   if (!uid || uid === '응시번호' || uid === 'NO' || name === '성명' || name === '성 명') return null;
 
-  const job = cleanStr(cols[2]) || '미지정';
-  const dob = cleanStr(cols[4]);
-  const isE9 = /[oO○0]/.test(cleanStr(cols[5]));
-  const age = cleanStr(cols[6]);
+  const job = getCol(['직종', '직무'], 2) || '미지정';
+  const dob = getCol(['생년월일', 'DOB'], 4);
+  const isE9 = /[oO○0]/.test(getCol(['E9여부', 'E9', 'E-9'], 5));
+  const age = getCol(['나이', '연령'], 6);
 
   // Speaking evaluation details
   const krComprehension = cleanStr(cols[7]);
@@ -301,43 +454,42 @@ export const parseMainRow = (cols: string[], rowIndex: number, map?: Record<stri
   const weldScore = cleanStr(cols[19]);
   const weldGrade = cleanStr(cols[20]);
 
-  const resultStr = cleanStr(cols[21]);
-  const country = cleanStr(cols[22]) || '미지정';
-  const agency = cleanStr(cols[23]) || '미지정';
+  const resultStr = getCol(['기량검증결과', '기량검증 결과', '검증결과'], 21);
+  const country = getCol(['국적', '국가'], 22) || '미지정';
+  const agency = getCol(['송출업체', '업체', '송출사'], 23) || '미지정';
 
-  const testWeek = parseWeekInfo(cols[24]);
-  const passWeek = parseWeekInfo(cols[25]);
-  const dropWeek = parseWeekInfo(cols[26]);
-  const entryPassWeek = parseWeekInfo(cols[27]);
-  const entryDropWeek = parseWeekInfo(cols[28]);
+  const testWeek = parseWeekInfo(getCol(['응시일시', '응시일자', '시험일자', '본기량응시일시', '본기량응시일자'], 24));
+  const passWeek = parseWeekInfo(getCol(['합격일자', '본기량합격일자'], 25));
+  const dropWeek = parseWeekInfo(getCol(['본기량탈락일자', '탈락일자', '본기량불합격일자', '불합격일자'], 26));
+  const entryPassWeek = parseWeekInfo(getCol(['입국일자', '입국일시'], 27));
+  const entryDropWeek = parseWeekInfo(getCol(['입국탈락일자', '입국불합격일자'], 28));
 
   let finalPassWeek: number | '탈락' | null = null;
   let finalDropWeek: number | '탈락' | null = null;
   let finalEntryPassWeek: number | '탈락' | null = null;
   let finalEntryDropWeek: number | '탈락' | null = null;
 
-  // 1. Entry priority: 입국일자가 있으면 입국합격, 입국일자 없이 입국탈락일자만 있으면 입국탈락
+  // 1. Entry priority: 입국일자가 있으면 입국합격, 입국탈락일자가 있으면 입국탈락
   if (entryPassWeek !== null) {
     finalEntryPassWeek = entryPassWeek;
   } else if (entryDropWeek !== null) {
     finalEntryDropWeek = entryDropWeek;
   }
 
-  // 2. Main pass/drop priority: 입국일자나 본기량 합격일자가 있으면 결과 텍스트와 무관하게 본기량 합격
-  if (passWeek !== null || entryPassWeek !== null) {
-    finalPassWeek = passWeek || entryPassWeek || testWeek;
+  // 2. Main pass/drop priority: '기량검증 결과' 텍스트로 판단하지 않고 오직 '합격일자', '본기량 탈락일자' (또는 확정된 입국일자)로만 판단!
+  if (passWeek !== null) {
+    finalPassWeek = passWeek;
   } else if (dropWeek !== null) {
     finalDropWeek = dropWeek;
-  } else if (resultStr.includes('합격') || resultStr.includes('최종')) {
-    finalPassWeek = testWeek;
-  } else if (resultStr.includes('불합격') || resultStr.includes('탈락')) {
-    finalDropWeek = testWeek;
+  } else if (entryPassWeek !== null) {
+    // 입국일자가 부여되어 있는 인원은 이미 본기량을 합격한 상태
+    finalPassWeek = entryPassWeek;
   }
 
-  const track = cleanStr(cols[29]) || '민간업체';
-  const assignedDept = cleanStr(cols[30]);
-  const videoUrl = cleanStr(cols[31]);
-  const personalityTestUrl = cleanStr(cols[32]);
+  const track = getCol(['트랙', '구분'], 29) || '민간업체';
+  const assignedDept = getCol(['배치부서', '부서'], 30);
+  const videoUrl = getCol(['동영상링크', '영상링크', '동영상'], 31);
+  const personalityTestUrl = getCol(['인성검사링크', '인성검사'], 32);
   const notes = cols.slice(33).map(cleanStr).filter(Boolean).join(' | ');
 
   const krDetail: KrSpeakingDetail = {
@@ -422,20 +574,20 @@ export const getIndividualStatus = (ind: IndividualData, currentWeek: number): I
   const isPast = (w: number | '탈락' | null | undefined) =>
     w === '탈락' || (typeof w === 'number' && currentWeek >= w);
 
-  // 1. Pre test check (사전기량 검증)
+  // 1. Pre test check (사전기량 검증: 일자 기반 판정)
   const preTested = typeof ind.preTestWeek === 'number' && currentWeek >= ind.preTestWeek;
-  const prePassed = typeof ind.prePassWeek === 'number' && currentWeek >= ind.prePassWeek && !ind.preDropWeek;
-  const preDropped = typeof ind.preDropWeek === 'number' && currentWeek >= ind.preDropWeek;
+  const preDropped = isPast(ind.preDropWeek);
+  const prePassed = typeof ind.prePassWeek === 'number' && currentWeek >= ind.prePassWeek && !preDropped;
   const preWaiting = preTested && !prePassed && !preDropped;
 
-  // 2. Main test check (본기량 검증)
+  // 2. Main test check (본기량 검증: 일자 기반 판정)
   const mainTested = typeof ind.mainTestWeek === 'number' && currentWeek >= ind.mainTestWeek;
-  const mainPassed = typeof ind.mainPassWeek === 'number' && currentWeek >= ind.mainPassWeek && !ind.mainDropWeek;
-  const mainDropped = typeof ind.mainDropWeek === 'number' && currentWeek >= ind.mainDropWeek;
+  const mainDropped = isPast(ind.mainDropWeek);
+  const mainPassed = typeof ind.mainPassWeek === 'number' && currentWeek >= ind.mainPassWeek && !mainDropped;
   const mainWaiting = mainTested && !mainPassed && !mainDropped;
 
-  // 3. Entry check (입국 여부 - 입국일자가 부여된 인원은 실제 입국 완료자로 집계)
-  const entryDropped = typeof ind.entryDropWeek === 'number' && currentWeek >= ind.entryDropWeek && (!ind.entryPassWeek || (typeof ind.entryPassWeek === 'number' && ind.entryDropWeek >= ind.entryPassWeek));
+  // 3. Entry check (입국 여부: 일자 기반 판정)
+  const entryDropped = isPast(ind.entryDropWeek) && (!ind.entryPassWeek || (typeof ind.entryPassWeek === 'number' && typeof ind.entryDropWeek === 'number' && ind.entryDropWeek >= ind.entryPassWeek));
   const entryPassed = typeof ind.entryPassWeek === 'number' && currentWeek >= ind.entryPassWeek && !entryDropped;
 
   // Determine current active stage at currentWeek (single exclusive stage for active person)

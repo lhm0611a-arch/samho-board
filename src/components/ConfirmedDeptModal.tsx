@@ -3,6 +3,7 @@ import { UserCheck, X, ShieldCheck, MapPin, PlayCircle, FileText, Users, ArrowUp
 import { getWeekStr } from '../utils';
 import { COUNTRY_FLAG } from '../constants';
 import { IndividualData } from '../types';
+import { MediaViewerModal, MediaViewerTarget } from './MediaViewerModal';
 
 interface ConfirmedDeptModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
     key: 'uid',
     direction: 'asc',
   });
+  const [activeMedia, setActiveMedia] = useState<MediaViewerTarget | null>(null);
 
   // Reset sorting when selection changes
   useEffect(() => {
@@ -140,24 +142,24 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
               <h2 className="text-base sm:text-lg font-bold tracking-tight truncate break-keep text-white flex items-center gap-2">
                 <span>{selection.dept} 부서 확정 명단</span>
                 {selection.job && (
-                  <span className="text-blue-400 font-mono text-sm font-semibold bg-blue-950/40 px-2 py-0.5 rounded border border-blue-500/30">
+                  <span className="text-blue-300 text-xs sm:text-sm font-semibold bg-blue-950/60 px-2.5 py-0.5 rounded border border-blue-500/40">
                     {selection.job}
                   </span>
                 )}
               </h2>
             </div>
-            <span className="inline-flex items-center bg-[#0a0f18] text-slate-300 px-3 py-1 rounded-lg text-xs font-bold font-mono whitespace-nowrap border border-[#232f43]">
-              {statusLabel}: <span className="text-blue-400 font-extrabold ml-1">{rawInds.length}명</span>
+            <span className="inline-flex items-center bg-[#0a0f18] text-slate-200 px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap border border-[#232f43] tabular-nums">
+              {statusLabel}: <span className="text-blue-300 font-bold ml-1">{rawInds.length}명</span>
             </span>
             {Object.keys(countryCounts).length > 0 && (
               <div className="flex items-center gap-1.5 flex-wrap">
                 {Object.entries(countryCounts).map(([country, count]) => (
                   <span
                     key={country}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 text-xs font-semibold font-mono"
+                    className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-emerald-950/60 border border-emerald-500/40 text-emerald-200 text-xs font-semibold"
                   >
                     <span>{country}</span>
-                    <span className="text-emerald-400 font-bold">{count}명</span>
+                    <span className="text-emerald-300 font-bold tabular-nums">{count}명</span>
                   </span>
                 ))}
               </div>
@@ -175,16 +177,16 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
         {/* Modal Body / Table */}
         <div className="p-0 sm:p-5 overflow-y-auto flex-1 hide-scrollbar">
           {sortedInds.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-20 text-slate-500">
-              <Users size={56} className="mb-3 opacity-20" />
-              <p className="font-semibold text-sm">해당 조건에 부합하는 확정(입국) 명단이 없습니다.</p>
+            <div className="flex flex-col items-center justify-center py-20 text-slate-400">
+              <Users size={56} className="mb-3 opacity-30" />
+              <p className="font-semibold text-sm sm:text-base text-slate-300">해당 조건에 부합하는 확정(입국) 명단이 없습니다.</p>
             </div>
           ) : (
             <div className="overflow-x-auto sm:rounded-xl border border-[#232f43] bg-[#0a0f18]">
               <table className="w-full text-center border-collapse min-w-[980px]">
-                <thead className="bg-[#151c28] text-slate-400 text-xs border-b border-[#232f43] select-none">
+                <thead className="bg-[#151c28] text-slate-200 text-xs border-b border-[#232f43] select-none">
                   <tr>
-                    <th className="py-3 px-2 font-semibold w-12 border-r border-[#232f43]/60 text-center text-slate-400 whitespace-nowrap">
+                    <th className="py-3 px-2 font-semibold w-12 border-r border-[#232f43]/60 text-center whitespace-nowrap">
                       No.
                     </th>
                     <th
@@ -234,31 +236,31 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
                     </th>
                     <th className="py-2.5 px-3 font-semibold border-r border-[#232f43]/60 bg-blue-950/20 text-blue-300 text-center w-44 whitespace-nowrap">
                       <div className="text-xs text-blue-300 font-semibold mb-1 whitespace-nowrap">본기량 상세 점수</div>
-                      <div className="flex items-center justify-center gap-2 text-[11px] font-mono whitespace-nowrap">
+                      <div className="flex items-center justify-center gap-2 text-xs whitespace-nowrap">
                         <button
                           type="button"
                           onClick={() => handleSort('mainChibuScore')}
-                          className="flex items-center gap-0.5 hover:text-white transition-colors text-slate-400"
+                          className="flex items-center gap-0.5 hover:text-white transition-colors text-slate-300"
                           title="취부점수로 정렬"
                         >
                           <span>취부</span>
                           <SortIcon columnKey="mainChibuScore" />
                         </button>
-                        <span className="text-slate-600">/</span>
+                        <span className="text-slate-500">/</span>
                         <button
                           type="button"
                           onClick={() => handleSort('mainWeldScore')}
-                          className="flex items-center gap-0.5 hover:text-white transition-colors text-slate-400"
+                          className="flex items-center gap-0.5 hover:text-white transition-colors text-slate-300"
                           title="용접점수로 정렬"
                         >
                           <span>용접</span>
                           <SortIcon columnKey="mainWeldScore" />
                         </button>
-                        <span className="text-slate-600">/</span>
+                        <span className="text-slate-500">/</span>
                         <button
                           type="button"
                           onClick={() => handleSort('mainKrScore')}
-                          className="flex items-center gap-0.5 hover:text-white transition-colors text-slate-400"
+                          className="flex items-center gap-0.5 hover:text-white transition-colors text-slate-300"
                           title="한국어점수로 정렬"
                         >
                           <span>한국어</span>
@@ -266,7 +268,7 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
                         </button>
                       </div>
                     </th>
-                    <th className="py-3 px-2 font-semibold text-center border-r border-[#232f43]/60 text-slate-400 w-28 whitespace-nowrap">
+                    <th className="py-3 px-2 font-semibold text-center border-r border-[#232f43]/60 text-slate-200 w-28 whitespace-nowrap">
                       첨부 (영상/인성)
                     </th>
                     <th
@@ -280,7 +282,7 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
                     </th>
                   </tr>
                 </thead>
-                <tbody className="text-xs">
+                <tbody className="text-xs sm:text-sm">
                   {sortedInds.map((ind, idx) => {
                     const isE9 = Boolean(ind.isE9);
                     const ageNum = ind.age ? (typeof ind.age === 'number' ? ind.age : parseInt(String(ind.age), 10)) : null;
@@ -291,67 +293,67 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
                         className="border-b border-[#232f43]/40 hover:bg-[#151c28]/70 transition-colors"
                       >
                         {/* No. */}
-                        <td className="py-2.5 px-2 text-slate-500 font-mono text-center border-r border-[#232f43]/40">
+                        <td className="py-2.5 px-2 text-slate-400 font-medium tabular-nums text-center border-r border-[#232f43]/40">
                           {idx + 1}
                         </td>
 
                         {/* 응시번호 / 성명 */}
                         <td className="py-2.5 px-3 text-white border-r border-[#232f43]/40">
                           <div className="flex items-center justify-start gap-2">
-                            <span className="font-mono text-xs font-semibold text-blue-300 bg-blue-950/40 px-2 py-0.5 rounded border border-blue-500/30 shrink-0">
+                            <span className="font-mono text-xs font-semibold text-blue-300 bg-blue-950/60 px-2 py-0.5 rounded border border-blue-500/40 shrink-0">
                               {ind.uid}
                             </span>
-                            <span className="font-medium text-slate-100 whitespace-nowrap text-xs truncate max-w-[220px]">
+                            <span className="font-semibold text-white whitespace-nowrap text-xs sm:text-sm truncate max-w-[220px]">
                               {ind.name}
                             </span>
                           </div>
                         </td>
 
                         {/* 나이 */}
-                        <td className="py-2.5 px-2 text-center border-r border-[#232f43]/40 whitespace-nowrap font-mono text-xs text-slate-300">
+                        <td className="py-2.5 px-2 text-center border-r border-[#232f43]/40 whitespace-nowrap tabular-nums text-xs sm:text-sm text-slate-200">
                           {ageNum ? `${ageNum}세` : '-'}
                         </td>
 
                         {/* E-9 출신 여부 */}
                         <td className="py-2.5 px-2 text-center border-r border-[#232f43]/40 whitespace-nowrap">
                           {isE9 ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-950/40 text-amber-300 border border-amber-500/30 text-[11px] font-semibold font-mono">
-                              <ShieldCheck size={11} className="text-amber-400" />
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-950/60 text-amber-200 border border-amber-500/40 text-xs font-semibold">
+                              <ShieldCheck size={12} className="text-amber-300" />
                               <span>E-9</span>
                             </span>
                           ) : (
-                            <span className="text-slate-600 text-xs font-mono">-</span>
+                            <span className="text-slate-400 text-xs">-</span>
                           )}
                         </td>
 
                         {/* 국가 / 업체 */}
                         <td className="py-2.5 px-3 text-center border-r border-[#232f43]/40">
-                          <div className="flex items-center justify-center gap-1 text-xs text-slate-200">
-                            <span className="font-medium">{ind.country}</span>
+                          <div className="flex items-center justify-center gap-1 text-xs sm:text-sm text-slate-200">
+                            <span className="font-semibold">{ind.country}</span>
                           </div>
                           {authRole !== 'production' && ind.agency && (
-                            <div className="text-[11px] text-slate-400 font-mono mt-0.5">
-                              {ind.agency} {ind.track && <span className="text-slate-500">({ind.track})</span>}
+                            <div className="text-xs text-slate-300 mt-0.5">
+                              {ind.agency} {ind.track && <span className="text-slate-400">({ind.track})</span>}
                             </div>
                           )}
                         </td>
 
                         {/* 투입 직무 */}
-                        <td className="py-2.5 px-3 text-slate-200 font-semibold border-r border-[#232f43]/40 text-xs text-center">
+                        <td className="py-2.5 px-3 text-slate-200 font-semibold border-r border-[#232f43]/40 text-xs sm:text-sm text-center">
                           {ind.job}
                         </td>
 
                         {/* 본기량 상세 점수 */}
                         <td className="py-2 px-3 text-center border-r border-[#232f43]/40 bg-blue-950/10">
-                          <div className="flex items-center justify-center gap-2 font-mono text-xs">
+                          <div className="flex items-center justify-center gap-2 text-xs">
                             {/* 취부 */}
                             <div className="flex flex-col items-center min-w-[2.2rem]">
-                              <span className="text-[10px] text-slate-500">취부</span>
+                              <span className="text-xs text-slate-400">취부</span>
                               <span
-                                className={`font-semibold ${
+                                className={`font-semibold tabular-nums ${
                                   Number(ind.mainChibuScore) >= 80
-                                    ? 'text-blue-400 font-bold'
-                                    : 'text-slate-300'
+                                    ? 'text-blue-300 font-bold'
+                                    : 'text-slate-200'
                                 }`}
                               >
                                 {ind.mainChibuScore ?? '-'}
@@ -360,12 +362,12 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
                             <span className="text-[#232f43]">|</span>
                             {/* 용접 */}
                             <div className="flex flex-col items-center min-w-[2.2rem]">
-                              <span className="text-[10px] text-slate-500">용접</span>
+                              <span className="text-xs text-slate-400">용접</span>
                               <span
-                                className={`font-semibold ${
+                                className={`font-semibold tabular-nums ${
                                   Number(ind.mainWeldScore) >= 80
-                                    ? 'text-blue-400 font-bold'
-                                    : 'text-slate-300'
+                                    ? 'text-blue-300 font-bold'
+                                    : 'text-slate-200'
                                 }`}
                               >
                                 {ind.mainWeldScore ?? '-'}
@@ -374,12 +376,12 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
                             <span className="text-[#232f43]">|</span>
                             {/* 한국어 */}
                             <div className="flex flex-col items-center min-w-[2.2rem]">
-                              <span className="text-[10px] text-slate-500">한국어</span>
+                              <span className="text-xs text-slate-400">한국어</span>
                               <span
-                                className={`font-semibold ${
+                                className={`font-semibold tabular-nums ${
                                   Number(ind.mainKrScore) >= 70 || Number(ind.mainKrScore) >= 15
-                                    ? 'text-emerald-400 font-bold'
-                                    : 'text-slate-300'
+                                    ? 'text-emerald-300 font-bold'
+                                    : 'text-slate-200'
                                 }`}
                               >
                                 {ind.mainKrScore ?? '-'}
@@ -392,36 +394,56 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
                         <td className="py-2.5 px-2 text-center border-r border-[#232f43]/40 whitespace-nowrap">
                           <div className="flex items-center justify-center gap-1">
                             {ind.videoUrl ? (
-                              <a
-                                href={ind.videoUrl.startsWith('http') ? ind.videoUrl : `https://${ind.videoUrl}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center justify-center px-1.5 py-0.5 bg-blue-950/40 hover:bg-blue-900/60 text-blue-300 border border-blue-500/30 rounded text-[10px] font-semibold transition-colors whitespace-nowrap font-mono"
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMedia({
+                                    url: ind.videoUrl,
+                                    type: 'video',
+                                    title: '기량 평가 및 인터뷰 영상',
+                                    candidateName: ind.name,
+                                    candidateUid: ind.uid,
+                                    candidateJob: ind.job,
+                                    candidateAgency: ind.agency,
+                                    candidateDept: ind.assignedDept || ind.dept || selection?.dept,
+                                    scoreInfo: ind.mainWeldScore || ind.mainKrScore ? `용접 ${ind.mainWeldScore ?? '-'}점 / 한국어 ${ind.mainKrScore ?? '-'}점` : undefined,
+                                  });
+                                }}
+                                title="프로그램 내에서 영상 바로 실행"
+                                className="inline-flex items-center justify-center px-2 py-1 bg-sky-950/60 text-sky-300 border border-sky-500/40 hover:bg-sky-900/60 hover:border-sky-400 rounded text-xs font-semibold transition-all active:scale-95 whitespace-nowrap shadow-sm cursor-pointer"
                               >
-                                영상
-                              </a>
+                                <PlayCircle size={13} className="mr-1 text-sky-400" /> 영상
+                              </button>
                             ) : (
-                              <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-slate-600 text-[10px] font-mono">
+                              <span className="inline-flex items-center justify-center px-2 py-1 bg-[#0a0f18] text-slate-500 border border-white/5 rounded text-xs">
                                 -
                               </span>
                             )}
                             {ind.personalityTestUrl ? (
-                              <a
-                                href={
-                                  ind.personalityTestUrl.startsWith('http')
-                                    ? ind.personalityTestUrl
-                                    : `https://${ind.personalityTestUrl}`
-                                }
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                onClick={(e) => e.stopPropagation()}
-                                className="inline-flex items-center justify-center px-1.5 py-0.5 bg-emerald-950/40 hover:bg-emerald-900/60 text-emerald-300 border border-emerald-500/30 rounded text-[10px] font-semibold transition-colors whitespace-nowrap font-mono"
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setActiveMedia({
+                                    url: ind.personalityTestUrl,
+                                    type: 'personality',
+                                    title: '인성 검사 결과 보고서',
+                                    candidateName: ind.name,
+                                    candidateUid: ind.uid,
+                                    candidateJob: ind.job,
+                                    candidateAgency: ind.agency,
+                                    candidateDept: ind.assignedDept || ind.dept || selection?.dept,
+                                    scoreInfo: ind.mainWeldScore || ind.mainKrScore ? `용접 ${ind.mainWeldScore ?? '-'}점 / 한국어 ${ind.mainKrScore ?? '-'}점` : undefined,
+                                  });
+                                }}
+                                title="프로그램 내에서 인성 검사 결과 바로 실행"
+                                className="inline-flex items-center justify-center px-2 py-1 bg-emerald-950/60 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900/60 hover:border-emerald-400 rounded text-xs font-semibold transition-all active:scale-95 whitespace-nowrap shadow-sm cursor-pointer"
                               >
-                                인성
-                              </a>
+                                <FileText size={13} className="mr-1 text-emerald-400" /> 인성
+                              </button>
                             ) : (
-                              <span className="inline-flex items-center justify-center px-1.5 py-0.5 text-slate-600 text-[10px] font-mono">
+                              <span className="inline-flex items-center justify-center px-2 py-1 bg-[#0a0f18] text-slate-500 border border-white/5 rounded text-xs">
                                 -
                               </span>
                             )}
@@ -429,7 +451,7 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
                         </td>
 
                         {/* 입국 주차 */}
-                        <td className="py-2.5 px-3 text-blue-400 font-semibold text-center font-mono text-xs whitespace-nowrap min-w-[130px]">
+                        <td className="py-2.5 px-3 text-blue-300 font-semibold text-center tabular-nums text-xs sm:text-sm whitespace-nowrap min-w-[130px]">
                           {ind.entryPassWeek ? getWeekStr(Number(ind.entryPassWeek)) : '-'}
                         </td>
                       </tr>
@@ -441,6 +463,12 @@ export const ConfirmedDeptModal: React.FC<ConfirmedDeptModalProps> = ({
           )}
         </div>
       </div>
+
+      <MediaViewerModal
+        isOpen={!!activeMedia}
+        onClose={() => setActiveMedia(null)}
+        media={activeMedia}
+      />
     </div>
   ) : null;
 };

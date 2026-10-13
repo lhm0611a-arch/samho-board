@@ -41,12 +41,14 @@ import {
   parseSupplyRow,
   normalizeUID,
   normalizeName,
+  isSameIndividual,
   assignDepartments,
   assignPlannedSupplyWeeks,
   autoAllocate,
   getSheetId,
   getIndividualStatus,
   parseWeekInfo,
+  createHeaderMap,
 } from "./utils";
 import {
   DEPT_REQUEST_DB_DEFAULT,
@@ -361,31 +363,15 @@ export default function App() {
       });
     });
 
-    // 2. Merge Main-test records with smart matching
+    // 2. Merge Main-test records: 이름(성명)의 성/이름 위치 무관 동일 스펠링 + 생년월일 기준 매칭
     mainList.forEach((ind2, i) => {
       const normUid = normalizeUID(ind2.uid);
-      const normName = normalizeName(ind2.name);
       let matchedKey: string | null = null;
 
-      // Match 1: Normalized UID exact match
-      if (normUid) {
-        for (const [k, v] of mergedMap.entries()) {
-          if (v._mergeKey === normUid && !v.hasMainData) {
-            matchedKey = k;
-            break;
-          }
-        }
-      }
-
-      // Match 2: Name + DOB match fallback
-      if (!matchedKey && normName && normName.length >= 3) {
-        for (const [k, v] of mergedMap.entries()) {
-          if (!v.hasMainData && normalizeName(v.name) === normName) {
-            if (!v.dob || !ind2.dob || v.dob === ind2.dob) {
-              matchedKey = k;
-              break;
-            }
-          }
+      for (const [k, v] of mergedMap.entries()) {
+        if (!v.hasMainData && isSameIndividual(v, ind2)) {
+          matchedKey = k;
+          break;
         }
       }
 
@@ -394,6 +380,12 @@ export default function App() {
         mergedMap.set(matchedKey, {
           ...existing,
           ...ind2,
+          uid: existing.uid || ind2.uid,
+          name: existing.name || ind2.name,
+          dob: existing.dob || ind2.dob,
+          country: existing.country || ind2.country,
+          agency: existing.agency || ind2.agency,
+          job: existing.job || ind2.job,
           hasPreData: true,
           hasMainData: true,
           // Preserve pre-test scores
@@ -544,7 +536,8 @@ export default function App() {
           );
         } else {
           const parsedPre = parseCSVText(text1);
-          mergedPre = parsedPre.map((cols, i) => parsePreRow(cols, i)).filter(Boolean) as IndividualData[];
+          const preHeaderMap = createHeaderMap(parsedPre.slice(0, 3));
+          mergedPre = parsedPre.map((cols, i) => parsePreRow(cols, i, preHeaderMap)).filter(Boolean) as IndividualData[];
           if (mergedPre.length > 0) ind1Success = true;
         }
       }
@@ -558,7 +551,8 @@ export default function App() {
           );
         } else {
           const parsedMain = parseCSVText(text2);
-          mergedMain = parsedMain.map((cols, i) => parseMainRow(cols, i)).filter(Boolean) as IndividualData[];
+          const mainHeaderMap = createHeaderMap(parsedMain.slice(0, 3));
+          mergedMain = parsedMain.map((cols, i) => parseMainRow(cols, i, mainHeaderMap)).filter(Boolean) as IndividualData[];
           if (mergedMain.length > 0) ind2Success = true;
         }
       }
@@ -579,6 +573,10 @@ export default function App() {
         try {
           localStorage.setItem("cache_written_v2", "true");
           const batch = writeBatch(db);
+          batch.set(doc(db, "cache", "metadata"), {
+            version: CURRENT_CACHE_VERSION,
+            updatedAt: new Date().toISOString(),
+          });
           batch.set(doc(db, "cache", "request"), {
             data: JSON.stringify(finalDept || []),
           });
@@ -635,7 +633,7 @@ export default function App() {
     }
   };
 
-  const CURRENT_CACHE_VERSION = "2026_v5_supply_281_entry_w49";
+  const CURRENT_CACHE_VERSION = "2026_v8_spelling_token_matching_no_mocks";
 
   const resetToMasterDefaults = async (showMsg = true) => {
     setRequestDB(REQUEST_DB_DEFAULT);
@@ -651,24 +649,24 @@ export default function App() {
         updatedAt: new Date().toISOString(),
       });
       batch.set(doc(db, "cache", "request"), {
-        data: JSON.stringify(REQUEST_DB_DEFAULT),
+        data: JSON.stringify([]),
       });
       batch.set(doc(db, "cache", "agency"), {
-        data: JSON.stringify(AGENCY_SUPPLY_DB_DEFAULT),
+        data: JSON.stringify([]),
       });
       batch.set(doc(db, "cache", "individual_pre"), {
-        data: JSON.stringify(DEFAULT_MERGED_INDIVIDUALS.filter((i) => i.hasPreData)),
+        data: JSON.stringify([]),
       });
       batch.set(doc(db, "cache", "individual_main"), {
-        data: JSON.stringify(DEFAULT_MERGED_INDIVIDUALS.filter((i) => i.hasMainData)),
+        data: JSON.stringify([]),
       });
       await batch.commit();
       if (showMsg) {
-        showAlert("✅ 2026년 마스터 데이터(총 공급 281명, 유학생 59명 포함)로 성공적으로 초기화되었습니다.");
+        showAlert("✅ 캐시 데이터가 초기화되었습니다. Google Sheets 동기화 버튼을 눌러 실제 시트 데이터를 불러와주세요.");
       }
     } catch (err) {
       if (showMsg) {
-        showAlert("✅ 로컬 데이터가 2026년 마스터(281명)로 복원되었습니다.");
+        showAlert("✅ 로컬 데이터가 성공적으로 초기화되었습니다.");
       }
     }
   };
@@ -688,32 +686,29 @@ export default function App() {
         const cachedMetaVersion = metaSnap.exists() ? metaSnap.data()?.version : null;
         let isCacheValid = cachedMetaVersion === CURRENT_CACHE_VERSION;
 
-        if (isCacheValid && agencySnap.exists() && reqSnap.exists()) {
-          const agencyData = JSON.parse(agencySnap.data().data);
-          const reqData = JSON.parse(reqSnap.data().data);
-          const totalCount = agencyData.reduce((sum: number, a: any) => sum + (a.count || 0), 0);
-          
-          if (totalCount >= 300 && agencyData.length >= 40) {
-            setRequestDB(reqData);
-            setAgencySupplyDB(agencyData);
-            let preData: IndividualData[] = [];
-            let mainData: IndividualData[] = [];
-            if (preSnap.exists()) preData = JSON.parse(preSnap.data().data);
-            if (mainSnap.exists()) mainData = JSON.parse(mainSnap.data().data);
-            if (preData.length > 0 || mainData.length > 0) {
-              mergeAndSetIndDB(preData, mainData);
-            }
+        if (isCacheValid) {
+          if (agencySnap.exists() && reqSnap.exists()) {
+            const agencyData = JSON.parse(agencySnap.data()?.data || "[]");
+            const reqData = JSON.parse(reqSnap.data()?.data || "[]");
+            setRequestDB(Array.isArray(reqData) ? reqData : []);
+            setAgencySupplyDB(Array.isArray(agencyData) ? agencyData : []);
+          }
+          let preData: IndividualData[] = [];
+          let mainData: IndividualData[] = [];
+          if (preSnap.exists()) preData = JSON.parse(preSnap.data()?.data || "[]");
+          if (mainSnap.exists()) mainData = JSON.parse(mainSnap.data()?.data || "[]");
+          if (preData.length > 0 || mainData.length > 0) {
+            mergeAndSetIndDB(preData, mainData);
           } else {
-            isCacheValid = false;
+            setIndividualsDB([]);
           }
         }
 
         if (!isCacheValid) {
           await resetToMasterDefaults(false);
-        }
-
-        if (baseSheetUrl && individualSheetUrl && !isCacheValid) {
-          fetchGoogleSheets(false);
+          if (baseSheetUrl && individualSheetUrl) {
+            await fetchGoogleSheets(false);
+          }
         }
       } catch (e) {
         await resetToMasterDefaults(false);
@@ -1158,17 +1153,17 @@ export default function App() {
                     setLoginId(e.target.value);
                     setLoginError(false);
                   }}
-                  className={`w-full px-4 py-[12px] pl-12 bg-[#050b14] border border-[#1a2332] focus:border-cyan-500/50 text-white placeholder-slate-500 rounded-lg outline-none transition-all font-mono`}
+                  className={`w-full px-4 py-3 pl-12 bg-[#050b14] border border-[#1a2332] focus:border-cyan-400 text-white placeholder-slate-400 rounded-lg outline-none transition-all text-sm`}
                   placeholder="아이디 입력"
                   autoFocus
                 />
                 <Users
                   size={18}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
                 />
               </div>
               {/[ㄱ-ㅎ|ㅏ-ㅣ|가-힣]/.test(loginId) && (
-                <p className="text-xs text-orange-400 mt-2 ml-1">
+                <p className="text-xs text-amber-300 font-medium mt-2 ml-1">
                   영문으로 변환하여 입력해주세요.
                 </p>
               )}
@@ -1182,16 +1177,16 @@ export default function App() {
                     setLoginPassword(e.target.value);
                     setLoginError(false);
                   }}
-                  className={`w-full px-4 py-[12px] pl-12 bg-[#050b14] border ${loginError ? "border-red-500/50" : "border-[#1a2332] focus:border-cyan-500/50"} text-white placeholder-slate-500 rounded-lg outline-none transition-all font-mono`}
+                  className={`w-full px-4 py-3 pl-12 bg-[#050b14] border ${loginError ? "border-red-500/70" : "border-[#1a2332] focus:border-cyan-400"} text-white placeholder-slate-400 rounded-lg outline-none transition-all text-sm`}
                   placeholder="비밀번호 입력"
                 />
                 <Lock
                   size={18}
-                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-500"
+                  className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400"
                 />
               </div>
               {loginError && (
-                <p className="text-xs text-red-400 font-medium mt-2 pl-2">
+                <p className="text-xs text-red-400 font-semibold mt-2 pl-2">
                   아이디 또는 비밀번호가 일치하지 않습니다.
                 </p>
               )}
@@ -1199,7 +1194,7 @@ export default function App() {
 
             <button
               type="submit"
-              className="w-full py-4 bg-gradient-to-r from-red-900 via-slate-800 to-blue-900 hover:from-red-800 hover:via-slate-700 hover:to-blue-800 text-white rounded-lg font-bold shadow-lg transition-all text-[15px] tracking-wide flex justify-center items-center gap-2 border border-white/5"
+              className="w-full py-3.5 bg-gradient-to-r from-red-900 via-slate-800 to-blue-900 hover:from-red-800 hover:via-slate-700 hover:to-blue-800 text-white rounded-lg font-bold shadow-lg transition-all text-base tracking-wide flex justify-center items-center gap-2 border border-white/10"
               style={{ marginTop: '11px' }}
             >
               시스템 접속
@@ -1207,8 +1202,8 @@ export default function App() {
           </form>
 
           {/* Footer inside card */}
-          <div className="w-full flex justify-end items-center mt-12 mb-2 px-2 text-[10px] font-bold font-mono tracking-widest">
-            <div className="text-cyan-500/50">SECURE CONNECTION (ONLINE)</div>
+          <div className="w-full flex justify-end items-center mt-12 mb-2 px-2 text-xs font-semibold tracking-wider">
+            <div className="text-cyan-400/80">SECURE CONNECTION (ONLINE)</div>
           </div>
         </div>
       </div>
@@ -1218,7 +1213,7 @@ export default function App() {
   // Geometric Balance Main App View
   return (
     <div
-      className="min-h-screen text-slate-300 flex flex-col font-sans select-none antialiased relative"
+      className="min-h-screen text-slate-200 flex flex-col font-sans select-none antialiased relative"
       style={{
         backgroundImage: "url('/yard.png')",
         backgroundSize: "cover",
@@ -1231,8 +1226,8 @@ export default function App() {
       <div className="absolute inset-0 grid-pattern pointer-events-none z-0 opacity-30" />
       <div className="absolute inset-0 scanline pointer-events-none z-0 opacity-50" />
       <div className="relative z-10 flex flex-col flex-1 h-full overflow-hidden">
-        {/* Header Section (Geometric Balance Theme -> Family Look) */}
-        <header className="h-[72px] bg-[#0a0f18]/80 backdrop-blur-md border-b border-[#1a2332]/50 flex items-center justify-between px-4 sm:px-8 flex-shrink-0 relative overflow-x-auto hide-scrollbar z-20" style={{ backgroundColor: '#0b5aad' }}>
+        {/* Header Section */}
+        <header className="h-[72px] bg-[#0b5aad] border-b border-[#163085] flex items-center justify-between px-4 sm:px-8 flex-shrink-0 relative overflow-x-auto hide-scrollbar z-20 shadow-md">
           <div className="absolute top-0 left-0 right-0 h-1 bg-[#163085]"></div>
 
           <div className="flex items-center gap-4 sm:gap-8 md:gap-14">
@@ -1242,7 +1237,7 @@ export default function App() {
                 <h1 className="text-lg sm:text-xl font-bold text-white tracking-tight flex items-center gap-2">
                   스마트 수급 플랫폼
                 </h1>
-                <p className="text-[9px] sm:text-[10px] text-emerald-500 font-extrabold uppercase tracking-widest font-mono mt-0.5">
+                <p className="text-xs text-blue-100/90 font-semibold uppercase tracking-wider mt-0.5">
                   GLOBAL WORKFORCE SUPPLY
                 </p>
               </div>
@@ -1251,14 +1246,14 @@ export default function App() {
             <div className="flex gap-2">
               <button
                 onClick={() => setActiveTab("dashboard")}
-                className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${activeTab === "dashboard" ? "bg-[#059669] hover:bg-[#047857] text-white shadow-sm" : "bg-[#151c28] text-slate-400 hover:text-white border border-[#232f43]"}`}
+                className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${activeTab === "dashboard" ? "bg-[#059669] hover:bg-[#047857] text-white shadow-sm" : "bg-[#151c28]/90 text-slate-200 hover:text-white border border-[#232f43]"}`}
               >
                 <LayoutDashboard size={16} /> 대시보드
               </button>
               {authRole === "admin" && (
                 <button
                   onClick={() => setActiveTab("data")}
-                  className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${activeTab === "data" ? "bg-[#059669] hover:bg-[#047857] text-white shadow-sm" : "bg-[#151c28] text-slate-400 hover:text-white border border-[#232f43]"}`}
+                  className={`px-4 sm:px-6 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all flex items-center gap-1.5 sm:gap-2 whitespace-nowrap ${activeTab === "data" ? "bg-[#059669] hover:bg-[#047857] text-white shadow-sm" : "bg-[#151c28]/90 text-slate-200 hover:text-white border border-[#232f43]"}`}
                 >
                   <Database size={16} /> 시스템 관리
                 </button>
@@ -1271,32 +1266,32 @@ export default function App() {
               <p className="text-sm font-bold text-white uppercase tracking-wider">
                 {authRole === "admin" ? "SYSTEM ADMIN" : "HD현대삼호"}
               </p>
-              <p className="text-[11px] text-slate-400 font-medium tracking-wide mt-0.5">
+              <p className="text-xs text-blue-100 font-medium tracking-wide mt-0.5">
                 공급망 관제 센터
               </p>
             </div>
 
             <div className="flex items-center gap-2 sm:gap-4">
-              <div className="hidden sm:flex w-10 h-10 rounded-full border border-[#232f43] items-center justify-center text-slate-400 bg-[#151c28]">
+              <div className="hidden sm:flex w-10 h-10 rounded-full border border-blue-400/30 items-center justify-center text-blue-100 bg-blue-900/40">
                 <ShieldCheck size={20} />
               </div>
 
-              <div className="hidden sm:block w-px h-6 bg-[#232f43] mx-1"></div>
+              <div className="hidden sm:block w-px h-6 bg-blue-400/30 mx-1"></div>
 
               <button
                 onClick={() => fetchGoogleSheets(true)}
-                className="p-2 text-slate-400 hover:text-white transition-colors"
+                className="p-2 text-blue-100 hover:text-white transition-colors"
                 title="Google Sheets 동기화"
               >
                 <RefreshCw
                   size={18}
-                  className={isLoading ? "animate-spin text-emerald-400" : ""}
+                  className={isLoading ? "animate-spin text-emerald-300" : ""}
                 />
               </button>
 
               <button
                 onClick={() => setIsPasswordChangeOpen(true)}
-                className="p-2 text-slate-400 hover:text-blue-400 transition-colors"
+                className="p-2 text-blue-100 hover:text-white transition-colors"
                 title="비밀번호 변경"
               >
                 <Key size={20} />
@@ -1307,7 +1302,7 @@ export default function App() {
                   setAuthRole(null);
                   setActiveTab("dashboard");
                 }}
-                className="p-2 text-slate-400 hover:text-red-400 transition-colors"
+                className="p-2 text-blue-100 hover:text-rose-300 transition-colors"
                 title="로그아웃"
               >
                 <Power size={20} />
@@ -1340,24 +1335,24 @@ export default function App() {
                   ></div>
                   <div className="flex justify-between items-start relative z-10">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-blue-400 uppercase tracking-widest font-mono mb-0.5">
+                      <span className="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-0.5">
                         TOTAL PLANNED
                       </span>
-                      <span className="text-[15px] sm:text-base font-bold text-white tracking-tight">
+                      <span className="text-sm sm:text-base font-bold text-white tracking-tight">
                         총 공급 계획 인원
                       </span>
                     </div>
-                    <div className="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-blue-500/15 border border-blue-500/30 flex items-center justify-center text-blue-400 shrink-0">
                       <Users size={15} />
                     </div>
                   </div>
-                  <div className="flex items-baseline justify-between mt-3 pt-2 border-t border-[#232f43]/40 relative z-10">
-                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono">
+                  <div className="flex items-baseline justify-between mt-3 pt-2 border-t border-[#232f43]/60 relative z-10">
+                    <span className="text-xs text-slate-300 font-semibold tracking-wide">
                       올해 목표
                     </span>
-                    <span className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-white tabular-nums tracking-tight">
                       {overviewTotal}
-                      <span className="text-xs font-semibold text-slate-400 ml-1">
+                      <span className="text-sm font-semibold text-slate-300 ml-1.5">
                         명
                       </span>
                     </span>
@@ -1382,20 +1377,20 @@ export default function App() {
                   ></div>
                   <div className="flex justify-between items-start relative z-10">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest font-mono mb-0.5">
+                      <span className="text-xs font-semibold text-emerald-300 uppercase tracking-wider mb-0.5">
                         MATCHED & ARRIVED
                       </span>
-                      <span className="text-[15px] sm:text-base font-bold text-white tracking-tight">
+                      <span className="text-sm sm:text-base font-bold text-white tracking-tight">
                         매칭 및 입국 완료
                       </span>
                     </div>
-                    <div className="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shrink-0">
                       <ShieldCheck size={15} />
                     </div>
                   </div>
-                  <div className="flex items-baseline justify-between mt-3 pt-2 border-t border-[#232f43]/40 relative z-10">
+                  <div className="flex items-baseline justify-between mt-3 pt-2 border-t border-[#232f43]/60 relative z-10">
                     <div className="flex items-center gap-1.5 min-w-0">
-                      <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono whitespace-nowrap">
+                      <span className="text-xs text-slate-300 font-semibold whitespace-nowrap tracking-wide">
                         {getWeekStr(currentWeek)} 누적
                       </span>
                       {currentWaveIndex !== -1 && currentWaveEntryCount > 0 && (
@@ -1404,15 +1399,15 @@ export default function App() {
                             e.stopPropagation();
                             toggleFilter("current_wave");
                           }}
-                          className={`text-[9px] font-extrabold px-1.5 py-0.5 rounded border transition-all flex items-center font-mono whitespace-nowrap ${filterStatus === "current_wave" ? "bg-emerald-600/25 text-emerald-300 border-emerald-500/40" : "bg-[#151c28] text-slate-400 border-[#232f43] hover:bg-[#1a2332]"}`}
+                          className={`text-xs font-bold px-2 py-0.5 rounded border transition-all flex items-center whitespace-nowrap ${filterStatus === "current_wave" ? "bg-emerald-600/30 text-emerald-200 border-emerald-500/50" : "bg-[#151c28] text-slate-300 border-[#232f43] hover:bg-[#1a2332]"}`}
                         >
                           {currentWaveIndex + 1}차 +{currentWaveEntryCount}명
                         </button>
                       )}
                     </div>
-                    <span className="text-2xl sm:text-3xl font-display font-black text-emerald-400 tracking-tight">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-emerald-300 tabular-nums tracking-tight">
                       {completedCount}
-                      <span className="text-xs font-semibold text-emerald-500/60 ml-1">
+                      <span className="text-sm font-semibold text-emerald-400/80 ml-1.5">
                         명
                       </span>
                     </span>
@@ -1437,24 +1432,24 @@ export default function App() {
                   ></div>
                   <div className="flex justify-between items-start relative z-10">
                     <div className="flex flex-col">
-                      <span className="text-[10px] font-bold text-purple-400 uppercase tracking-widest font-mono mb-0.5">
+                      <span className="text-xs font-semibold text-purple-300 uppercase tracking-wider mb-0.5">
                         FUTURE ARRIVALS
                       </span>
-                      <span className="text-[15px] sm:text-base font-bold text-white tracking-tight">
+                      <span className="text-sm sm:text-base font-bold text-white tracking-tight">
                         향후 입국 예정
                       </span>
                     </div>
-                    <div className="w-7 h-7 rounded-lg bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 shrink-0">
+                    <div className="w-7 h-7 rounded-lg bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 shrink-0">
                       <CalendarClock size={15} />
                     </div>
                   </div>
-                  <div className="flex items-baseline justify-between mt-3 pt-2 border-t border-[#232f43]/40 relative z-10">
-                    <span className="text-[11px] text-slate-400 font-bold uppercase tracking-wider font-mono whitespace-nowrap">
+                  <div className="flex items-baseline justify-between mt-3 pt-2 border-t border-[#232f43]/60 relative z-10">
+                    <span className="text-xs text-slate-300 font-semibold whitespace-nowrap tracking-wide">
                       {getWeekStr(currentWeek)} 이후
                     </span>
-                    <span className="text-2xl sm:text-3xl font-display font-black text-white tracking-tight">
+                    <span className="text-2xl sm:text-3xl font-extrabold text-white tabular-nums tracking-tight">
                       {plannedCount}
-                      <span className="text-xs font-semibold text-slate-400 ml-1">
+                      <span className="text-sm font-semibold text-slate-300 ml-1.5">
                         명
                       </span>
                     </span>
@@ -1469,10 +1464,10 @@ export default function App() {
                   <div className="absolute top-0 left-0 right-0 h-[3px] bg-transparent group-hover:bg-amber-500/50 transition-all rounded-t-2xl"></div>
                   <div className="flex flex-col gap-0.5">
                     <div className="flex justify-between items-center gap-1">
-                      <span className="text-[10px] font-extrabold text-amber-500 uppercase tracking-widest font-mono">
+                      <span className="text-xs font-bold text-amber-300 uppercase tracking-wider">
                         TIMELINE
                       </span>
-                      <div className="flex items-center gap-1 shrink-0">
+                      <div className="flex items-center gap-1.5 shrink-0">
                         <div className="flex bg-[#151c28] rounded-lg border border-[#232f43] p-0.5 shadow-inner">
                           {[2025, 2026, 2027].map((year) => {
                             const isSelected =
@@ -1496,10 +1491,10 @@ export default function App() {
                                     setCurrentWeek((year - 2025) * 52 + 1);
                                   }
                                 }}
-                                className={`text-[10px] px-1.5 py-0.5 rounded font-bold font-mono transition-all ${
+                                className={`text-xs px-2 py-0.5 rounded font-bold transition-all ${
                                   isSelected
-                                    ? "bg-amber-500/25 text-amber-300 shadow-sm border border-amber-500/40"
-                                    : "text-slate-400 hover:text-slate-200"
+                                    ? "bg-amber-500/30 text-amber-200 shadow-sm border border-amber-500/40"
+                                    : "text-slate-300 hover:text-white"
                                 }`}
                               >
                                 {year}
@@ -1509,16 +1504,16 @@ export default function App() {
                         </div>
                         <button
                           onClick={() => setCurrentWeek(getIsoWeek(new Date()))}
-                          className="text-[10px] bg-amber-500/10 hover:bg-amber-500/25 px-1.5 py-0.5 rounded-lg transition-colors text-amber-400 font-bold border border-amber-500/30 font-mono tracking-tight shadow-sm whitespace-nowrap flex items-center gap-1"
+                          className="text-xs bg-amber-500/15 hover:bg-amber-500/30 px-2 py-0.5 rounded-lg transition-colors text-amber-300 font-bold border border-amber-500/30 tracking-tight shadow-sm whitespace-nowrap flex items-center gap-1"
                           title="실시간 현재 주차로 이동"
                         >
-                          <Clock size={11} className="shrink-0" />
+                          <Clock size={12} className="shrink-0" />
                           현재
                         </button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between">
-                      <span className="text-[15px] sm:text-base font-extrabold text-white tracking-tight">
+                      <span className="text-sm sm:text-base font-bold text-white tracking-tight">
                         주차별 타임라인
                       </span>
                     </div>
@@ -1567,7 +1562,7 @@ export default function App() {
                                   />
                                   {/* Tooltip on hover */}
                                   <div
-                                    className={`opacity-0 group-hover/dot:opacity-100 transition-opacity duration-200 flex flex-col items-center absolute -top-8 bg-[#0a0f18]/95 backdrop-blur-md text-white text-[10px] font-bold font-mono px-2.5 py-1 rounded-md border border-emerald-500/50 shadow-2xl whitespace-nowrap z-50 pointer-events-none ${
+                                    className={`opacity-0 group-hover/dot:opacity-100 transition-opacity duration-200 flex flex-col items-center absolute -top-8 bg-[#0a0f18]/95 backdrop-blur-md text-white text-xs font-semibold px-2.5 py-1 rounded-md border border-emerald-500/50 shadow-2xl whitespace-nowrap z-50 pointer-events-none ${
                                       percent > 70
                                         ? "right-0 translate-x-1"
                                         : percent < 30
@@ -1575,9 +1570,9 @@ export default function App() {
                                           : "left-1/2 -translate-x-1/2"
                                     }`}
                                   >
-                                    <span className="text-emerald-400 font-extrabold flex items-center gap-1">
+                                    <span className="text-emerald-300 font-bold flex items-center gap-1">
                                       <span>{getWeekStr(m.week)}</span>
-                                      <span className="text-slate-300 font-medium">({m.count}명 입국)</span>
+                                      <span className="text-slate-200 font-normal">({m.count}명 입국)</span>
                                     </span>
                                   </div>
                                 </div>
@@ -1597,19 +1592,19 @@ export default function App() {
                             />
                           </div>
 
-                          <div className="flex items-center justify-between gap-2 mt-2 pt-1.5 border-t border-[#232f43]/40 h-7">
+                          <div className="flex items-center justify-between gap-2 mt-2 pt-1.5 border-t border-[#232f43]/60 h-7">
                             <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="font-display font-black text-white text-xs sm:text-sm tracking-tight whitespace-nowrap">
+                              <span className="font-bold text-white text-sm sm:text-base tracking-tight whitespace-nowrap">
                                 {getWeekStr(currentWeek)}
                               </span>
                               {activeMilestone && (
-                                <span className="text-[10px] font-extrabold font-mono px-1.5 py-0.5 rounded-md bg-emerald-950/60 text-emerald-300 border border-emerald-500/40 whitespace-nowrap shadow-sm flex items-center gap-1 animate-pulse">
+                                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-emerald-950/70 text-emerald-200 border border-emerald-500/40 whitespace-nowrap shadow-sm flex items-center gap-1 animate-pulse">
                                   <span>✈️</span>
                                   <span>입국 +{activeMilestone.count}명</span>
                                 </span>
                               )}
                             </div>
-                            <span className="text-[11px] text-amber-400 font-mono font-bold px-1.5 py-0.5 rounded bg-amber-500/10 border border-amber-500/20 whitespace-nowrap shrink-0">
+                            <span className="text-xs text-amber-300 font-bold px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/30 whitespace-nowrap shrink-0 tabular-nums">
                               W{((currentWeek - 1) % 52) + 1}
                             </span>
                           </div>
@@ -1631,8 +1626,8 @@ export default function App() {
                   }}
                 />
                 <div className="relative z-10">
-                  <div className="px-5 border-b border-[#232f43] flex items-center justify-between bg-[#151c28]/60 h-[50px]">
-                    <h3 className="font-bold text-white text-[15px] tracking-wide">
+                  <div className="px-5 border-b border-[#232f43] flex items-center justify-between bg-[#151c28]/60 h-[52px]">
+                    <h3 className="font-bold text-white text-base tracking-tight">
                       단계별 수급 진행 현황
                     </h3>
                   </div>
@@ -1670,18 +1665,18 @@ export default function App() {
                   className={`col-span-12 ${authRole !== "production" ? "lg:col-span-8 xl:col-span-8" : ""} bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#3b4a6b] shadow-[0_0_15px_rgba(59,130,246,0.1)] flex flex-col min-h-[500px] animate-in fade-in slide-in-from-bottom-4`}
                     style={{ animationDelay: "400ms" }}
                   >
-                    <div className="px-4 sm:px-5 border-b border-[#232f43] flex flex-row items-center justify-between bg-[#151c28]/60 h-[61px] gap-2 sm:gap-0">
+                    <div className="px-4 sm:px-5 border-b border-[#232f43] flex flex-row items-center justify-between bg-[#151c28]/60 h-[60px] gap-2 sm:gap-0">
                       <div className="flex items-center gap-2">
                         <Building2
-                          size={16}
-                          className="text-blue-500 hidden sm:block"
+                          size={18}
+                          className="text-blue-400 hidden sm:block"
                         />
-                        <h3 className="font-bold text-white text-[13px] sm:text-[15px] tracking-wide whitespace-nowrap">
+                        <h3 className="font-bold text-white text-sm sm:text-base tracking-tight whitespace-nowrap">
                           부서 배치 현황
                         </h3>
                       </div>
                       <div className="flex items-center gap-2">
-                        <span className="text-[11px] font-bold font-mono px-2.5 py-1 rounded-lg bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-950/60 text-blue-300 border border-blue-500/30">
                           실제 확정 명단 (2025년~누적)
                         </span>
                       </div>
@@ -1703,21 +1698,21 @@ export default function App() {
                                 job: null,
                               })
                             }
-                            className="bg-[#151c28]/60 backdrop-blur-sm border border-[#232f43] rounded-xl p-3 sm:p-3.5 cursor-pointer hover:border-blue-500/50 transition-all hover:bg-[#1a2332]/80 hover:-translate-y-0.5 animate-in zoom-in-95 group"
+                            className="bg-[#151c28]/60 backdrop-blur-sm border border-[#232f43] rounded-xl p-3.5 sm:p-4 cursor-pointer hover:border-blue-500/50 transition-all hover:bg-[#1a2332]/80 hover:-translate-y-0.5 animate-in zoom-in-95 group shadow-sm"
                             style={{ animationDelay: `${500 + idx * 50}ms` }}
                           >
                             <div className="flex justify-between items-center mb-1.5">
-                              <h4 className="text-sm font-extrabold text-white tracking-wide font-mono group-hover:text-blue-300 transition-colors">
+                              <h4 className="text-sm sm:text-base font-bold text-white tracking-wide group-hover:text-blue-300 transition-colors">
                                 {dept.name}
                               </h4>
-                              <span className="text-base sm:text-lg font-display font-black text-blue-400">
+                              <span className="text-base sm:text-lg font-extrabold text-blue-300 tabular-nums">
                                 {dept.totalArrived}
-                                <span className="text-xs text-slate-500 font-mono font-medium ml-1">
+                                <span className="text-xs font-semibold text-slate-300 ml-1">
                                   / {dept.totalReq}
                                 </span>
                               </span>
                             </div>
-                            <div className="w-full bg-slate-800 rounded-full h-1.5 mb-2 overflow-hidden">
+                            <div className="w-full bg-slate-800 rounded-full h-1.5 mb-2.5 overflow-hidden">
                               <div
                                 className="bg-gradient-to-r from-blue-500 to-emerald-400 shadow-[0_0_10px_rgba(59,130,246,0.6)] h-full rounded-full transition-all duration-1000 ease-out"
                                 style={{
@@ -1725,7 +1720,7 @@ export default function App() {
                                 }}
                               ></div>
                             </div>
-                            <div className="flex flex-wrap gap-1 mb-1.5">
+                            <div className="flex flex-wrap gap-1.5 mb-2">
                               {Object.entries(dept.jobs).map(
                                 ([job, stats]: any) => (
                                   <button
@@ -1737,10 +1732,10 @@ export default function App() {
                                         job: job,
                                       });
                                     }}
-                                    className="text-[10px] font-extrabold bg-[#0a0f18]/80 border border-[#232f43] text-slate-300 px-1.5 py-0.5 rounded-md hover:bg-blue-900/30 hover:border-blue-500/40 hover:text-blue-300 transition-all font-mono"
+                                    className="text-xs font-semibold bg-[#0a0f18] border border-[#232f43] text-slate-200 px-2 py-0.5 rounded-md hover:bg-blue-950/60 hover:border-blue-500/40 hover:text-blue-200 transition-all"
                                   >
                                     {job}{" "}
-                                    <span className="text-blue-400 ml-0.5 font-black">
+                                    <span className="text-blue-300 ml-1 font-bold tabular-nums">
                                       {stats.arr}/{stats.req}
                                     </span>
                                   </button>
@@ -1749,8 +1744,8 @@ export default function App() {
                             </div>
 
                             {/* Country Breakdown (국가별 배치 인원) */}
-                            <div className="pt-1.5 border-t border-[#232f43]/40 flex flex-wrap items-center gap-1.5">
-                              <span className="text-[10px] text-slate-400 font-bold font-mono">
+                            <div className="pt-2 border-t border-[#232f43]/60 flex flex-wrap items-center gap-1.5">
+                              <span className="text-xs text-slate-300 font-semibold">
                                 국가:
                               </span>
                               {dept.countries &&
@@ -1759,17 +1754,17 @@ export default function App() {
                                   ([country, count]: any) => (
                                     <span
                                       key={country}
-                                      className="text-[10px] font-extrabold bg-emerald-950/40 border border-emerald-500/30 text-emerald-300 px-1.5 py-0.5 rounded-md flex items-center gap-1 font-mono shadow-sm"
+                                      className="text-xs font-semibold bg-emerald-950/60 border border-emerald-500/30 text-emerald-300 px-2 py-0.5 rounded-md flex items-center gap-1 shadow-sm"
                                     >
                                       <span>{country}</span>
-                                      <span className="text-emerald-400 font-black">
+                                      <span className="text-emerald-300 font-bold tabular-nums">
                                         {count}명
                                       </span>
                                     </span>
                                   ),
                                 )
                               ) : (
-                                <span className="text-[10px] text-slate-500 font-mono italic">
+                                <span className="text-xs text-slate-400">
                                   배치 0명
                                 </span>
                               )}
@@ -1786,25 +1781,25 @@ export default function App() {
                     style={{ animationDelay: "500ms" }}
                   >
                     <div className="absolute inset-0 z-0 opacity-[0.1] mix-blend-screen pointer-events-none" style={{ backgroundImage: "url('/yard.png')", backgroundSize: 'cover', backgroundPosition: 'center' }} />
-                    <div className="relative z-10 p-5 border-b border-[#232f43] bg-[#151c28]/60 h-[64px] flex items-center justify-between">
-                      <h3 className="font-bold text-white text-[15px] tracking-wide flex items-center gap-2">
-                        <Globe size={18} className="text-blue-500" /> 수급처 현황
+                    <div className="relative z-10 p-5 border-b border-[#232f43] bg-[#151c28]/60 h-[60px] flex items-center justify-between">
+                      <h3 className="font-bold text-white text-sm sm:text-base tracking-tight flex items-center gap-2">
+                        <Globe size={18} className="text-blue-400" /> 수급처 현황
                       </h3>
-                      <span className="text-[11px] font-bold font-mono px-2.5 py-1 rounded-lg bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                      <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-sky-950/60 text-sky-300 border border-sky-500/30">
                         전체 누적 실적
                       </span>
                     </div>
-                    <div className="relative z-10 p-4 border-b border-[#232f43] flex flex-col gap-3">
+                    <div className="relative z-10 p-4 border-b border-[#232f43] flex flex-col gap-2.5">
                       <select
                         value={selectedJobFilter}
                         onChange={(e) => setSelectedJobFilter(e.target.value)}
-                        className="w-full text-xs font-mono font-bold bg-[#0a0f18]/80 border border-[#232f43] rounded-xl p-3 text-white outline-none focus:border-blue-500 transition-all"
+                        className="w-full text-xs sm:text-sm font-semibold bg-[#0a0f18] border border-[#232f43] rounded-xl p-2.5 text-white outline-none focus:border-blue-500 transition-all"
                       >
                         {jobOptionsWithCount.map(({ job, count }) => (
                           <option
                             key={job}
                             value={job}
-                            className="bg-slate-900"
+                            className="bg-slate-900 text-white"
                           >
                             직무: {job} ({count}명)
                           </option>
@@ -1815,13 +1810,13 @@ export default function App() {
                         onChange={(e) =>
                           setSelectedCountryFilter(e.target.value)
                         }
-                        className="w-full text-xs font-mono font-bold bg-[#0a0f18]/80 border border-[#232f43] rounded-xl p-3 text-white outline-none focus:border-blue-500 transition-all"
+                        className="w-full text-xs sm:text-sm font-semibold bg-[#0a0f18] border border-[#232f43] rounded-xl p-2.5 text-white outline-none focus:border-blue-500 transition-all"
                       >
                         {countryOptionsWithCount.map(({ country, count }) => (
                           <option
                             key={country}
                             value={country}
-                            className="bg-slate-900"
+                            className="bg-slate-900 text-white"
                           >
                             국가: {country} ({count}명)
                           </option>
@@ -1830,11 +1825,11 @@ export default function App() {
                     </div>
                     <div className="p-4 flex-1 overflow-y-auto hide-scrollbar">
                       {sourceSummary.agency.length === 0 ? (
-                        <div className="text-center py-10 text-slate-500 text-xs font-mono">
+                        <div className="text-center py-10 text-slate-400 text-xs sm:text-sm font-medium">
                           선택된 조건의 누적 입국 실적이 없습니다.
                         </div>
                       ) : (
-                        <div className="space-y-3">
+                        <div className="space-y-2.5">
                           {sourceSummary.agency.map((agency: any, idx) => {
                             const maxVal = sourceSummary.agency[0]?.value || 1;
                             const width = `${(agency.value / maxVal) * 100}%`;
@@ -1844,21 +1839,21 @@ export default function App() {
                                 onClick={() =>
                                   setSelectedAgencyModal(agency.name)
                                 }
-                                className="bg-[#151c28] p-4 rounded-xl border border-[#232f43] cursor-pointer hover:border-blue-500/50 hover:bg-[#1a2332] transition-all hover:-translate-y-1 animate-in zoom-in-95"
+                                className="bg-[#151c28] p-3.5 sm:p-4 rounded-xl border border-[#232f43] cursor-pointer hover:border-blue-500/50 hover:bg-[#1a2332] transition-all hover:-translate-y-0.5 animate-in zoom-in-95 shadow-sm"
                                 style={{ animationDelay: `${600 + idx * 50}ms` }}
                               >
-                                <div className="flex justify-between items-center text-sm font-extrabold text-white mb-2 font-mono">
+                                <div className="flex justify-between items-center text-sm font-bold text-white mb-2">
                                   <span className="flex items-center">
                                     {agency.name}
-                                    <span className="text-[11px] text-slate-300 font-semibold tracking-normal ml-1.5 px-1.5 py-0.5 rounded bg-[#0a0f18] border border-[#232f43]">
+                                    <span className="text-xs text-slate-300 font-semibold ml-1.5 px-2 py-0.5 rounded bg-[#0a0f18] border border-[#232f43]">
                                       {agency.country}
                                     </span>
                                   </span>
-                                  <span className="text-sky-400 font-bold">
+                                  <span className="text-sky-300 font-bold tabular-nums">
                                     {agency.value}명
                                   </span>
                                 </div>
-                                <div className="w-full bg-slate-800 rounded-full h-1 overflow-hidden">
+                                <div className="w-full bg-slate-800 rounded-full h-1.5 overflow-hidden">
                                   <div
                                     className="bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.8)] h-full transition-all duration-1000 ease-out"
                                     style={{ width }}
@@ -1880,19 +1875,19 @@ export default function App() {
           {activeTab === "data" && authRole === "admin" && (
             <div className="max-w-[1000px] mx-auto space-y-6">
               <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#232f43] p-6 shadow-[0_0_15px_rgba(59,130,246,0.1)]">
-                <h2 className="text-lg font-display font-black text-white mb-6 flex items-center border-b border-[#232f43] pb-4 tracking-tight">
-                  <Settings2 className="mr-2 text-blue-500" /> 시스템 관리자
+                <h2 className="text-lg font-bold text-white mb-6 flex items-center border-b border-[#232f43] pb-4 tracking-tight">
+                  <Settings2 className="mr-2 text-blue-400" /> 시스템 관리자
                   설정
                 </h2>
 
                 <div className="mb-8">
-                  <h3 className="text-sm font-extrabold text-white mb-4 uppercase tracking-widest font-mono">
+                  <h3 className="text-sm font-bold text-white mb-3 tracking-wide">
                     신규 부서 계정 관리
                   </h3>
                   <div className="border border-[#232f43] rounded-xl p-4 bg-[#151c28]">
                     <div className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end">
                       <div>
-                        <label className="text-xs font-extrabold text-blue-500/70 mb-2 block font-mono">
+                        <label className="text-xs font-bold text-slate-300 mb-1.5 block">
                           권한
                         </label>
                         <select
@@ -1900,7 +1895,7 @@ export default function App() {
                           onChange={(e) =>
                             setNewDeptAccountRole(e.target.value)
                           }
-                          className="w-full p-2 text-sm bg-[#0a0f18] border border-[#232f43] text-white rounded-lg outline-none focus:border-blue-500 transition-all font-mono"
+                          className="w-full p-2.5 text-sm bg-[#0a0f18] border border-[#232f43] text-white rounded-lg outline-none focus:border-blue-500 transition-all font-medium"
                         >
                           <option value="production">
                             생산부서 (소속 데이터 열람)
@@ -1911,7 +1906,7 @@ export default function App() {
                         </select>
                       </div>
                       <div>
-                        <label className="text-xs font-extrabold text-blue-500/70 mb-2 block font-mono">
+                        <label className="text-xs font-bold text-slate-300 mb-1.5 block">
                           부서명
                         </label>
                         <input
@@ -1921,7 +1916,7 @@ export default function App() {
                           onChange={(e) =>
                             setNewDeptAccountDept(e.target.value)
                           }
-                          className="w-full p-2 text-sm bg-[#0a0f18] border border-[#232f43] text-white placeholder-slate-500 rounded-lg outline-none focus:border-blue-500 transition-all font-mono"
+                          className="w-full p-2.5 text-sm bg-[#0a0f18] border border-[#232f43] text-white placeholder-slate-400 rounded-lg outline-none focus:border-blue-500 transition-all"
                           placeholder="직접 입력 또는 선택"
                         />
                         <datalist id="dept-list">
@@ -1933,7 +1928,7 @@ export default function App() {
                         </datalist>
                       </div>
                       <div>
-                        <label className="text-xs font-extrabold text-blue-500/70 mb-2 block font-mono">
+                        <label className="text-xs font-bold text-slate-300 mb-1.5 block">
                           새 아이디 (영문/숫자)
                         </label>
                         <input
@@ -1944,26 +1939,26 @@ export default function App() {
                               e.target.value.replace(/[^a-zA-Z0-9]/g, ""),
                             )
                           }
-                          className="w-full p-2 text-sm bg-[#0a0f18] border border-[#232f43] text-white placeholder-slate-500 rounded-lg outline-none focus:border-blue-500 transition-all font-mono"
+                          className="w-full p-2.5 text-sm bg-[#0a0f18] border border-[#232f43] text-white placeholder-slate-400 rounded-lg outline-none focus:border-blue-500 transition-all"
                           placeholder="아이디 입력"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-extrabold text-blue-500/70 mb-2 block font-mono">
+                        <label className="text-xs font-bold text-slate-300 mb-1.5 block">
                           새 비밀번호
                         </label>
                         <input
                           type="password"
                           value={newDeptAccountPw}
                           onChange={(e) => setNewDeptAccountPw(e.target.value)}
-                          className="w-full p-2 text-sm bg-[#0a0f18] border border-[#232f43] text-white placeholder-slate-500 rounded-lg outline-none focus:border-blue-500 transition-all font-mono"
+                          className="w-full p-2.5 text-sm bg-[#0a0f18] border border-[#232f43] text-white placeholder-slate-400 rounded-lg outline-none focus:border-blue-500 transition-all"
                           placeholder="새 비밀번호"
                         />
                       </div>
                       <div>
                         <button
                           onClick={handleCreateDeptAccount}
-                          className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs font-extrabold py-2.5 rounded-lg transition-all font-mono shadow-[0_0_15px_rgba(37,99,235,0.2)]"
+                          className="w-full bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold py-2.5 rounded-lg transition-all shadow-[0_0_15px_rgba(37,99,235,0.2)]"
                         >
                           생성 / 수정
                         </button>
@@ -1973,19 +1968,19 @@ export default function App() {
                 </div>
 
                 <div className="mb-4">
-                  <h3 className="text-sm font-extrabold text-white mb-4 uppercase tracking-widest font-mono">
+                  <h3 className="text-sm font-bold text-white mb-3 tracking-wide">
                     데이터 동기화 및 마스터 관리
                   </h3>
                   <div className="space-y-4">
                     <div className="bg-[#151c28] border border-[#232f43] rounded-xl p-6 text-center">
-                      <p className="text-sm text-slate-400 mb-4 font-mono">
+                      <p className="text-sm text-slate-300 mb-4 font-normal">
                         Google Sheets에 연결된 마스터 DB와 로우 DB의 최신
                         데이터를 가져옵니다.
                       </p>
                       <div className="flex flex-wrap items-center justify-center gap-3">
                         <button
                           onClick={() => fetchGoogleSheets(true)}
-                          className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] border border-blue-400/20 text-sm inline-flex items-center justify-center font-mono"
+                          className="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] border border-blue-400/20 text-sm inline-flex items-center justify-center"
                         >
                           <RefreshCw
                             size={16}
@@ -1995,10 +1990,10 @@ export default function App() {
                         </button>
                         <button
                           onClick={() => resetToMasterDefaults(true)}
-                          className="w-full sm:w-auto px-6 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-extrabold rounded-xl transition-all border border-[#232f43] text-sm inline-flex items-center justify-center font-mono"
+                          className="w-full sm:w-auto px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold rounded-xl transition-all border border-[#232f43] text-sm inline-flex items-center justify-center"
                         >
                           <Database size={16} className="mr-2 text-emerald-400" />
-                          2026 마스터 기본값 복원 (281명)
+                          데이터 캐시 초기화
                         </button>
                       </div>
                     </div>
@@ -2009,53 +2004,53 @@ export default function App() {
           )}
         </main>
 
-        {/* Footer Bar (Geometric Balance Theme) */}
-        <footer className="h-8 bg-[#0a0f18]/80 backdrop-blur-md border-t border-[#232f43] px-8 flex items-center justify-between text-[10px] text-blue-500/50 flex-shrink-0 font-mono z-20">
-          <span className="uppercase tracking-widest font-extrabold">
+        {/* Footer Bar */}
+        <footer className="h-9 bg-[#0a0f18]/90 backdrop-blur-md border-t border-[#232f43] px-6 sm:px-8 flex items-center justify-between text-xs text-slate-400 flex-shrink-0 z-20">
+          <span className="font-semibold text-slate-400">
             System Identity: E7-DASHBOARD-STABLE-v4
           </span>
-          <div className="flex gap-4 font-mono font-extrabold uppercase">
-            <span>Status: Nominal</span>
-            <span>Role: {authRole?.toUpperCase()}</span>
+          <div className="flex gap-4 font-medium text-slate-300">
+            <span>Status: <span className="text-emerald-400 font-semibold">Nominal</span></span>
+            <span>Role: <span className="text-blue-300 font-semibold">{authRole?.toUpperCase()}</span></span>
           </div>
         </footer>
 
         {/* Modals */}
         {isPasswordChangeOpen && (
           <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in">
-            <div className="bg-[#0a0f18]/90 backdrop-blur-xl rounded-2xl border border-[#232f43] p-6 max-w-sm w-full shadow-[0_0_30px_rgba(59,130,246,0.15)] flex flex-col items-center">
+            <div className="bg-[#0a0f18]/95 backdrop-blur-xl rounded-2xl border border-[#232f43] p-6 max-w-sm w-full shadow-[0_0_30px_rgba(59,130,246,0.15)] flex flex-col items-center">
               <div className="w-12 h-12 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center mb-4">
                 <Key size={24} className="text-blue-400" />
               </div>
-              <h2 className="text-lg font-black text-white mb-2 font-display">
+              <h2 className="text-lg font-bold text-white mb-2">
                 비밀번호 변경
               </h2>
-              <p className="text-xs text-slate-400 mb-6 text-center">
+              <p className="text-xs text-slate-300 mb-6 text-center">
                 보안을 위해 주기적으로 비밀번호를 변경해주세요.
               </p>
 
               <div className="w-full space-y-4">
                 <div>
-                  <label className="text-xs font-bold text-slate-300 mb-1 block">
+                  <label className="text-xs font-bold text-slate-200 mb-1 block">
                     현재 비밀번호
                   </label>
                   <input
                     type="password"
                     value={passwordChangeCurrent}
                     onChange={(e) => setPasswordChangeCurrent(e.target.value)}
-                    className="w-full p-3 text-sm bg-[#151c28] border border-[#232f43] text-white placeholder-slate-500 rounded-xl outline-none focus:border-blue-500 transition-all focus:ring-1 focus:ring-blue-500/50 font-mono"
+                    className="w-full p-3 text-sm bg-[#151c28] border border-[#232f43] text-white placeholder-slate-400 rounded-xl outline-none focus:border-blue-500 transition-all focus:ring-1 focus:ring-blue-500/50"
                     placeholder="현재 비밀번호 입력"
                   />
                 </div>
                 <div>
-                  <label className="text-xs font-bold text-slate-300 mb-1 block">
+                  <label className="text-xs font-bold text-slate-200 mb-1 block">
                     새 비밀번호
                   </label>
                   <input
                     type="password"
                     value={passwordChangeNew}
                     onChange={(e) => setPasswordChangeNew(e.target.value)}
-                    className="w-full p-3 text-sm bg-[#151c28] border border-[#232f43] text-white placeholder-slate-500 rounded-xl outline-none focus:border-blue-500 transition-all focus:ring-1 focus:ring-blue-500/50 font-mono"
+                    className="w-full p-3 text-sm bg-[#151c28] border border-[#232f43] text-white placeholder-slate-400 rounded-xl outline-none focus:border-blue-500 transition-all focus:ring-1 focus:ring-blue-500/50"
                     placeholder="새 비밀번호 입력"
                   />
                 </div>
@@ -2068,7 +2063,7 @@ export default function App() {
                     setPasswordChangeCurrent("");
                     setPasswordChangeNew("");
                   }}
-                  className="flex-1 bg-[#151c28] hover:bg-[#232f43] text-slate-300 text-sm font-bold py-3 rounded-xl transition-all"
+                  className="flex-1 bg-[#151c28] hover:bg-[#232f43] text-slate-200 text-sm font-semibold py-3 rounded-xl transition-all border border-[#232f43]"
                 >
                   취소
                 </button>
@@ -2122,18 +2117,18 @@ export default function App() {
         {/* Alert Modal */}
         {alertMessage && (
           <div className="fixed inset-0 z-[120] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-            <div className="bg-[#0a0f18] backdrop-blur-md rounded-2xl p-6 max-w-sm w-full shadow-[0_0_15px_rgba(59,130,246,0.1)] border border-[#232f43]  text-center">
+            <div className="bg-[#0a0f18] backdrop-blur-md rounded-2xl p-6 max-w-sm w-full shadow-[0_0_15px_rgba(59,130,246,0.1)] border border-[#232f43] text-center">
               <div className="flex justify-center mb-4">
                 <div className="w-10 h-10 bg-blue-600/20 rounded-xl border border-blue-500/30 flex items-center justify-center">
                   <AlertCircle className="text-blue-400 w-6 h-6" />
                 </div>
               </div>
-              <div className="whitespace-pre-wrap text-white font-medium text-sm mb-6">
+              <div className="whitespace-pre-wrap text-white font-medium text-sm mb-6 leading-relaxed">
                 {alertMessage}
               </div>
               <button
                 onClick={() => setAlertMessage(null)}
-                className="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white font-extrabold rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.3)] border border-blue-400/20 transition-all text-sm w-full font-mono"
+                className="px-6 py-2.5 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl shadow-[0_0_20px_rgba(37,99,235,0.3)] border border-blue-400/20 transition-all text-sm w-full"
               >
                 확인
               </button>

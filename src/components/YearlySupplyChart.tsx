@@ -37,14 +37,8 @@ export const YearlySupplyChart: React.FC<YearlySupplyChartProps> = ({ individual
         }
       });
     } else {
-      const baseTargets: Record<number, number> = {
-        2025: 34,
-        2026: 281,
-        2027: 0
-      };
-      const yearTarget = baseTargets[selectedYear] || 0;
       monthlyData.forEach(item => {
-        item.target = yearTarget / 12;
+        item.target = 0;
       });
     }
 
@@ -97,19 +91,13 @@ export const YearlySupplyChart: React.FC<YearlySupplyChartProps> = ({ individual
   }, [individuals, selectedYear, requestDB, currentWeek, currentYear]);
 
   const yearTarget = useMemo(() => {
-    if (requestDB) {
+    if (requestDB && requestDB.length > 0) {
       return requestDB.reduce((sum, req) => {
         const reqYear = 2025 + Math.floor((req.reqWeek - 1) / 52);
         return reqYear === selectedYear ? sum + req.reqCount : sum;
       }, 0);
     }
-    const baseTargets: Record<number, number> = {
-      2024: 34,
-      2025: 34,
-      2026: 281,
-      2027: 135
-    };
-    return baseTargets[selectedYear] || 0;
+    return 0;
   }, [selectedYear, requestDB]);
 
   const currentActual = useMemo(() => {
@@ -126,13 +114,13 @@ export const YearlySupplyChart: React.FC<YearlySupplyChartProps> = ({ individual
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-[#0a0f18]/90 backdrop-blur-md border border-[#232f43] p-4 rounded-xl shadow-xl">
-          <p className="text-slate-300 font-mono font-bold mb-2">{`${selectedYear}년 ${label}`}</p>
+        <div className="bg-[#0a0f18]/95 backdrop-blur-md border border-[#232f43] p-3.5 rounded-xl shadow-2xl">
+          <p className="text-slate-200 text-xs font-semibold mb-2">{`${selectedYear}년 ${label}`}</p>
           {payload.map((entry: any, index: number) => (
-            <div key={index} className="flex items-center gap-2 text-sm font-mono mt-1">
-              <div className="w-3 h-3 rounded-full" style={{ backgroundColor: entry.color }} />
-              <span className="text-slate-400 w-16">{entry.name}:</span>
-              <span className="text-white font-bold">{entry.value}명</span>
+            <div key={index} className="flex items-center gap-2 text-xs mt-1">
+              <div className="w-2.5 h-2.5 rounded-full shrink-0" style={{ backgroundColor: entry.color }} />
+              <span className="text-slate-300 w-12">{entry.name}:</span>
+              <span className="text-white font-bold tabular-nums">{entry.value}명</span>
             </div>
           ))}
         </div>
@@ -145,16 +133,16 @@ export const YearlySupplyChart: React.FC<YearlySupplyChartProps> = ({ individual
     <div className="bg-[#0a0f18]/60 backdrop-blur-md rounded-2xl border border-[#3b4a6b] shadow-[0_0_15px_rgba(59,130,246,0.1)] overflow-hidden relative animate-in fade-in slide-in-from-bottom-4 h-full" style={{ animationDelay: '400ms' }}>
       <div className="absolute inset-0 z-0 opacity-[0.1] mix-blend-screen pointer-events-none" style={{ backgroundImage: "url('/yard.png')", backgroundSize: 'cover', backgroundPosition: 'center' }} />
       <div className="relative z-10">
-        <div className="px-4 sm:px-5 py-2 sm:py-[5px] mt-0 h-auto sm:h-[52px] border-b border-[#232f43] flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#151c28]/60 gap-3 sm:gap-0">
-          <h3 className="font-bold text-white text-[13px] sm:text-[15px] tracking-wide flex items-center gap-1.5 sm:gap-2">
-            <TrendingUp size={16} className="text-emerald-500 hidden sm:block" /> 연도별 누적 현황
+        <div className="px-4 sm:px-5 py-2 sm:py-2.5 h-auto sm:h-[52px] border-b border-[#232f43] flex flex-col sm:flex-row items-start sm:items-center justify-between bg-[#151c28]/60 gap-3 sm:gap-0">
+          <h3 className="font-bold text-white text-sm sm:text-base tracking-wide flex items-center gap-2">
+            <TrendingUp size={16} className="text-emerald-400 hidden sm:block" /> 연도별 누적 현황
           </h3>
-          <div className="flex bg-[#0a0f18]/80 p-1 pt-1 rounded-xl border border-[#232f43] overflow-x-auto hide-scrollbar w-full sm:w-auto">
+          <div className="flex bg-[#0a0f18]/80 p-1 rounded-xl border border-[#232f43] overflow-x-auto hide-scrollbar w-full sm:w-auto">
             {[2025, 2026, 2027].map(year => (
               <button 
                 key={year}
                 onClick={() => setSelectedYear(year)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${selectedYear === year ? 'bg-emerald-600/20 text-emerald-400 border border-emerald-500/30 shadow-[0_0_10px_rgba(16,185,129,0.2)]' : 'text-slate-400 hover:text-slate-200'}`}
+                className={`px-3 py-1 rounded-lg text-xs font-semibold transition-all ${selectedYear === year ? 'bg-emerald-950/70 text-emerald-300 border border-emerald-500/50 shadow-sm' : 'text-slate-300 hover:text-white'}`}
               >
                 {year}년
               </button>
@@ -162,23 +150,23 @@ export const YearlySupplyChart: React.FC<YearlySupplyChartProps> = ({ individual
           </div>
         </div>
         
-        <div className="px-3 md:px-[15px] py-[15px] h-auto border-t border-[#3b4a6b]">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-[13px] gap-4">
+        <div className="px-4 sm:px-5 py-4 h-auto border-t border-[#3b4a6b]">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-3.5 gap-4">
             <div className="flex items-center gap-4 md:gap-6 w-full sm:w-auto">
               <div className="flex-1 sm:flex-none">
-                <p className="text-[11px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-1">목표 인원</p>
-                <p className="text-xl md:text-2xl font-display font-black text-slate-300">{yearTarget}<span className="text-sm text-slate-500 font-medium ml-1">명</span></p>
+                <p className="text-xs text-slate-300 font-medium mb-1">목표 인원</p>
+                <p className="text-xl md:text-2xl font-bold text-slate-100 tabular-nums">{yearTarget}<span className="text-xs text-slate-400 font-normal ml-1">명</span></p>
               </div>
-              <div className="h-10 w-[1px] bg-[#232f43]"></div>
+              <div className="h-8 w-[1px] bg-[#232f43]"></div>
               <div className="flex-1 sm:flex-none">
-                <p className="text-[11px] text-emerald-500 font-bold uppercase tracking-widest font-mono mb-1">현재 누적 달성</p>
-                <p className="text-xl md:text-2xl font-display font-black text-emerald-400">{currentActual}<span className="text-sm text-slate-500 font-medium ml-1">명</span></p>
+                <p className="text-xs text-emerald-400 font-semibold mb-1">현재 누적 달성</p>
+                <p className="text-xl md:text-2xl font-bold text-emerald-300 tabular-nums">{currentActual}<span className="text-xs text-emerald-400/80 font-normal ml-1">명</span></p>
               </div>
             </div>
             
-            <div className="bg-[#151c28]/80 px-4 py-2 rounded-xl border border-[#232f43] flex flex-col items-end justify-center w-full sm:w-auto">
-              <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest font-mono mb-0.5">달성률</span>
-              <span className="text-xl font-display font-black text-white">{achievementRate}<span className="text-xs text-slate-400 font-medium ml-1">%</span></span>
+            <div className="bg-[#151c28]/90 px-4 py-2 rounded-xl border border-[#232f43] flex flex-col items-end justify-center w-full sm:w-auto">
+              <span className="text-xs text-slate-300 font-medium mb-0.5">달성률</span>
+              <span className="text-xl font-bold text-white tabular-nums">{achievementRate}<span className="text-xs text-slate-300 font-normal ml-1">%</span></span>
             </div>
           </div>
 
