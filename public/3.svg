@@ -1,0 +1,52 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 300' width='600' height='300'>
+  <defs>
+    <radialGradient id='bgGrad3' cx='75%' cy='30%' r='80%'>
+      <stop offset='0%' stop-color='#581c87' stop-opacity='0.6'/>
+      <stop offset='50%' stop-color='#3b0764' stop-opacity='0.3'/>
+      <stop offset='100%' stop-color='#1e0538' stop-opacity='0'/>
+    </radialGradient>
+    <linearGradient id='purpGrad' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' stop-color='#c084fc' stop-opacity='0.9'/>
+      <stop offset='100%' stop-color='#a855f7' stop-opacity='0.3'/>
+    </linearGradient>
+  </defs>
+  <rect width='600' height='300' fill='url(#bgGrad3)'/>
+
+  <!-- Flight Trajectory Curve / Parabolic Arrival Path -->
+  <path d='M 270,240 C 360,220 420,160 520,70' fill='none' stroke='url(#purpGrad)' stroke-width='2.6' opacity='0.85'/>
+  <path d='M 300,260 C 380,240 440,190 540,100' fill='none' stroke='#e9d5ff' stroke-width='1.5' stroke-dasharray='6,6' opacity='0.5'/>
+
+  <!-- Airplane Silhouette at Endpoint -->
+  <g transform='translate(520, 70) rotate(-35) scale(1.1)'>
+    <path d='M 0,-15 L 4,-3 L 18,3 L 18,6 L 4,3 L 3,14 L 8,18 L 8,20 L 0,18 L -8,20 L -8,18 L -3,14 L -4,3 L -18,6 L -18,3 L -4,-3 Z' 
+          fill='#f3e8ff' opacity='0.9'/>
+    <circle cx='0' cy='0' r='24' fill='none' stroke='#c084fc' stroke-width='1.2' stroke-dasharray='4,4' opacity='0.6'/>
+  </g>
+
+  <!-- Future Schedule Grid / Calendar Matrix -->
+  <g transform='translate(360, 110)' opacity='0.45'>
+    <rect x='0' y='0' width='80' height='60' rx='8' fill='#2e1065' stroke='#a855f7' stroke-width='1.2'/>
+    <line x1='0' y1='18' x2='80' y2='18' stroke='#c084fc' stroke-width='1.2'/>
+    <!-- Dots in calendar matrix -->
+    <circle cx='18' cy='30' r='2.5' fill='#e9d5ff'/>
+    <circle cx='38' cy='30' r='2.5' fill='#e9d5ff'/>
+    <circle cx='58' cy='30' r='2.5' fill='#e9d5ff'/>
+    <circle cx='18' cy='46' r='2.5' fill='#e9d5ff'/>
+    <circle cx='38' cy='46' r='3.5' fill='#38bdf8'/>
+    <circle cx='58' cy='46' r='2.5' fill='#c084fc'/>
+  </g>
+
+  <!-- Destination Target Circles -->
+  <circle cx='520' cy='70' r='40' fill='none' stroke='#c084fc' stroke-width='1' stroke-dasharray='4,4' opacity='0.35'/>
+  <circle cx='520' cy='70' r='60' fill='none' stroke='#a855f7' stroke-width='0.8' opacity='0.25'/>
+
+  <!-- Waypoint Nodes -->
+  <circle cx='270' cy='240' r='5' fill='#c084fc' opacity='0.85'/>
+  <circle cx='270' cy='240' r='10' fill='none' stroke='#c084fc' stroke-width='1' opacity='0.5'/>
+  
+  <circle cx='390' cy='180' r='4' fill='#e9d5ff' opacity='0.75'/>
+  
+  <!-- Countdown Time Pill -->
+  <rect x='440' y='210' width='85' height='24' rx='12' fill='#3b0764' stroke='#c084fc' stroke-width='1' opacity='0.65'/>
+  <text x='482' y='226' fill='#f3e8ff' font-family='sans-serif' font-size='10' font-weight='bold' text-anchor='middle' opacity='0.85'>D-SCHEDULE</text>
+</svg>

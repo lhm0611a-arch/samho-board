@@ -70,6 +70,11 @@ import { DeptModal } from "./components/DeptModal";
 import { ConfirmedDeptModal } from "./components/ConfirmedDeptModal";
 import { AgencyDetailModal } from "./components/AgencyDetailModal";
 import {
+  KPI_BG_TOTAL_PLANNED,
+  KPI_BG_MATCHED_ARRIVED,
+  KPI_BG_FUTURE_PLANNED,
+} from "./components/KpiCardBackgrounds";
+import {
   doc,
   getDoc,
   setDoc,
@@ -1323,11 +1328,11 @@ export default function App() {
                   onClick={() => toggleFilter(null)}
                 >
                   <div
-                    className="absolute inset-0 z-0 opacity-30 transition-opacity group-hover:opacity-40 mix-blend-overlay pointer-events-none"
+                    className="absolute inset-0 z-0 opacity-55 transition-opacity group-hover:opacity-70 pointer-events-none"
                     style={{
-                      backgroundImage: "url('/1.png')",
+                      backgroundImage: `url('${KPI_BG_TOTAL_PLANNED}')`,
                       backgroundSize: "cover",
-                      backgroundPosition: "center",
+                      backgroundPosition: "center right",
                     }}
                   />
                   <div
@@ -1365,11 +1370,11 @@ export default function App() {
                   onClick={() => toggleFilter("completed")}
                 >
                   <div
-                    className="absolute inset-0 z-0 opacity-20 transition-opacity group-hover:opacity-30 mix-blend-overlay pointer-events-none"
+                    className="absolute inset-0 z-0 opacity-50 transition-opacity group-hover:opacity-65 pointer-events-none"
                     style={{
-                      backgroundImage: "url('/2.png')",
+                      backgroundImage: `url('${KPI_BG_MATCHED_ARRIVED}')`,
                       backgroundSize: "cover",
-                      backgroundPosition: "center",
+                      backgroundPosition: "center right",
                     }}
                   />
                   <div
@@ -1420,11 +1425,11 @@ export default function App() {
                   onClick={() => toggleFilter("planned")}
                 >
                   <div
-                    className="absolute inset-0 z-0 opacity-20 transition-opacity group-hover:opacity-30 mix-blend-overlay pointer-events-none"
+                    className="absolute inset-0 z-0 opacity-50 transition-opacity group-hover:opacity-65 pointer-events-none"
                     style={{
-                      backgroundImage: "url('/3.png')",
+                      backgroundImage: `url('${KPI_BG_FUTURE_PLANNED}')`,
                       backgroundSize: "cover",
-                      backgroundPosition: "center",
+                      backgroundPosition: "center right",
                     }}
                   />
                   <div

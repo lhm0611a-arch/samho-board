@@ -1,0 +1,46 @@
+<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 600 300' width='600' height='300'>
+  <defs>
+    <radialGradient id='bgGrad2' cx='75%' cy='35%' r='80%'>
+      <stop offset='0%' stop-color='#065f46' stop-opacity='0.6'/>
+      <stop offset='50%' stop-color='#064e3b' stop-opacity='0.3'/>
+      <stop offset='100%' stop-color='#022c22' stop-opacity='0'/>
+    </radialGradient>
+    <linearGradient id='emGrad' x1='0%' y1='0%' x2='100%' y2='100%'>
+      <stop offset='0%' stop-color='#34d399' stop-opacity='0.85'/>
+      <stop offset='100%' stop-color='#10b981' stop-opacity='0.25'/>
+    </linearGradient>
+  </defs>
+  <rect width='600' height='300' fill='url(#bgGrad2)'/>
+
+  <!-- Concentric Verification Radar & Rings -->
+  <circle cx='460' cy='140' r='100' fill='none' stroke='#10b981' stroke-width='1' stroke-dasharray='4,6' opacity='0.35'/>
+  <circle cx='460' cy='140' r='75' fill='none' stroke='#34d399' stroke-width='1.2' opacity='0.4'/>
+  <circle cx='460' cy='140' r='50' fill='none' stroke='#6ee7b7' stroke-width='1' stroke-dasharray='6,4' opacity='0.5'/>
+  <circle cx='460' cy='140' r='25' fill='none' stroke='#a7f3d0' stroke-width='1.4' opacity='0.6'/>
+
+  <!-- Verified Shield Emblem Silhouette -->
+  <path d='M 460,85 L 505,105 C 505,145 485,180 460,195 C 435,180 415,145 415,105 Z' 
+        fill='#10b981' fill-opacity='0.15' stroke='#34d399' stroke-width='2' opacity='0.75'/>
+  
+  <!-- Success Checkmark in Shield -->
+  <path d='M 445,140 L 455,152 L 478,126' fill='none' stroke='#a7f3d0' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round' opacity='0.9'/>
+
+  <!-- Matching Target Crosshairs & Data Connectors -->
+  <line x1='330' y1='140' x2='590' y2='140' stroke='#34d399' stroke-width='1' stroke-dasharray='5,5' opacity='0.3'/>
+  <line x1='460' y1='20' x2='460' y2='260' stroke='#34d399' stroke-width='1' stroke-dasharray='5,5' opacity='0.3'/>
+
+  <!-- Flow Arrows / Immigration Waves Arriving -->
+  <path d='M 300,190 Q 370,190 410,165' fill='none' stroke='url(#emGrad)' stroke-width='2' opacity='0.7'/>
+  <polygon points='415,162 403,160 408,171' fill='#34d399' opacity='0.8'/>
+
+  <path d='M 320,100 Q 380,100 420,120' fill='none' stroke='url(#emGrad)' stroke-width='1.8' stroke-dasharray='4,4' opacity='0.6'/>
+  
+  <!-- Success Badges & Wave Dots -->
+  <circle cx='300' cy='190' r='5' fill='#34d399' opacity='0.85'/>
+  <circle cx='320' cy='100' r='4' fill='#10b981' opacity='0.75'/>
+  <circle cx='535' cy='160' r='4' fill='#6ee7b7' opacity='0.8'/>
+  <circle cx='535' cy='160' r='10' fill='none' stroke='#34d399' stroke-width='1' opacity='0.4'/>
+  
+  <rect x='495' y='215' width='55' height='22' rx='6' fill='#064e3b' stroke='#34d399' stroke-width='1' opacity='0.6'/>
+  <text x='522' y='230' fill='#a7f3d0' font-family='sans-serif' font-size='10' font-weight='bold' text-anchor='middle' opacity='0.8'>PASS 100%</text>
+</svg>
